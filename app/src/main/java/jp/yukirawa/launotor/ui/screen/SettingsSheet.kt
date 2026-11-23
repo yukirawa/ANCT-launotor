@@ -79,9 +79,11 @@ fun SettingsSheet(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(
-                text = "監視・通知設定",
+                text = "設定",
                 style = MaterialTheme.typography.headlineSmallEmphasized,
                 color = colorScheme.onSurface,
+                maxLines = 1,
+                softWrap = false,
             )
 
             // Almost-done threshold setting
@@ -95,12 +97,14 @@ fun SettingsSheet(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     Text(
-                        text = "まもなく空き通知のタイミング",
+                        text = "もうすぐ通知",
                         style = MaterialTheme.typography.titleMediumEmphasized,
                         color = colorScheme.onSurface,
+                        maxLines = 1,
+                        softWrap = false,
                     )
                     Text(
-                        text = "指定した残り時間以下になると事前通知を送信します（開始時間がしきい値以下の場合はスキップ）。",
+                        text = "終わる少し前にお知らせします",
                         style = MaterialTheme.typography.bodySmall,
                         color = colorScheme.onSurfaceVariant,
                     )
@@ -115,7 +119,7 @@ fun SettingsSheet(
                         horizontalArrangement = ButtonGroupDefaults.HorizontalArrangement,
                     ) {
                         AppSettings.THRESHOLD_OPTIONS_MINUTES.forEach { option ->
-                            val label = if (option == 0) "OFF" else "${option}分前"
+                            val label = if (option == 0) "オフ" else "${option}分前"
                             toggleableItem(
                                 checked = settings.almostDoneThresholdMinutes == option,
                                 label = label,
@@ -129,7 +133,7 @@ fun SettingsSheet(
                 }
             }
 
-            // Notification & Live Updates settings
+            // Lock screen progress & vibration
             Surface(
                 shape = MaterialTheme.shapes.large,
                 color = colorScheme.surfaceContainer,
@@ -156,15 +160,13 @@ fun SettingsSheet(
                             )
                             Column {
                                 Text(
-                                    text = "Live Updates (リアルタイム常駐表示)",
+                                    text = "ロック画面の進行表示",
                                     style = MaterialTheme.typography.titleSmall,
+                                    maxLines = 1,
+                                    softWrap = false,
                                 )
                                 Text(
-                                    text = if (LiveUpdateSupport.isAndroid16OrHigher()) {
-                                        "Android 16 ステータスバーチップ＆進行バー表示"
-                                    } else {
-                                        "常駐プログレス通知で残り時間を監視"
-                                    },
+                                    text = "残り時間を通知やステータスバーに表示",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = colorScheme.onSurfaceVariant,
                                 )
@@ -176,14 +178,10 @@ fun SettingsSheet(
                         )
                     }
 
-                    if (LiveUpdateSupport.isAndroid16OrHigher()) {
+                    if (LiveUpdateSupport.isAndroid16OrHigher() && !canPostPromoted) {
                         Surface(
                             shape = MaterialTheme.shapes.medium,
-                            color = if (canPostPromoted) {
-                                colorScheme.primaryContainer.copy(alpha = 0.55f)
-                            } else {
-                                colorScheme.tertiaryContainer.copy(alpha = 0.7f)
-                            },
+                            color = colorScheme.tertiaryContainer.copy(alpha = 0.7f),
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             Row(
@@ -193,27 +191,11 @@ fun SettingsSheet(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween,
                             ) {
-                                Column(
+                                Text(
+                                    text = "ステータスバーにも表示するには許可が必要です",
+                                    style = MaterialTheme.typography.bodySmall,
                                     modifier = Modifier.weight(1f),
-                                    verticalArrangement = Arrangement.spacedBy(2.dp),
-                                ) {
-                                    Text(
-                                        text = if (canPostPromoted) {
-                                            "Android 16 Live Updates 許可済み"
-                                        } else {
-                                            "Android 16 Live Updates が未許可"
-                                        },
-                                        style = MaterialTheme.typography.labelLarge,
-                                    )
-                                    Text(
-                                        text = if (canPostPromoted) {
-                                            "ステータスバーのチップ表示が有効です。"
-                                        } else {
-                                            "システム設定でプロモート通知を許可するとチップ表示されます。"
-                                        },
-                                        style = MaterialTheme.typography.bodySmall,
-                                    )
-                                }
+                                )
                                 Spacer(Modifier.width(8.dp))
                                 FilledTonalButton(
                                     onClick = {
@@ -223,7 +205,7 @@ fun SettingsSheet(
                                         runCatching { context.startActivity(intent) }
                                     },
                                 ) {
-                                    Text("設定")
+                                    Text("設定", maxLines = 1, softWrap = false)
                                     Spacer(Modifier.width(4.dp))
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Rounded.OpenInNew,
@@ -256,13 +238,13 @@ fun SettingsSheet(
                                 ) {
                                     Icon(Icons.Rounded.Notifications, contentDescription = null)
                                     Text(
-                                        text = "通知権限が無効です。アラートを受け取るには許可してください。",
+                                        text = "通知がオフになっています",
                                         style = MaterialTheme.typography.bodySmall,
                                     )
                                 }
                                 Spacer(Modifier.width(8.dp))
                                 FilledTonalButton(onClick = onRequestNotificationPermission) {
-                                    Text("許可")
+                                    Text("許可", maxLines = 1, softWrap = false)
                                 }
                             }
                         }
@@ -285,11 +267,13 @@ fun SettingsSheet(
                             )
                             Column {
                                 Text(
-                                    text = "触覚フィードバック (Haptics)",
+                                    text = "振動フィードバック",
                                     style = MaterialTheme.typography.titleSmall,
+                                    maxLines = 1,
+                                    softWrap = false,
                                 )
                                 Text(
-                                    text = "タイマー操作時に心地よい振動フィードバックを返します",
+                                    text = "スライダーやボタン操作で軽く振動します",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = colorScheme.onSurfaceVariant,
                                 )
@@ -303,9 +287,8 @@ fun SettingsSheet(
                 }
             }
 
-            // About footer
             Text(
-                text = "洗濯乾燥機時間監視 (Launotor) v${BuildConfig.VERSION_NAME}",
+                text = "Launotor v${BuildConfig.VERSION_NAME}",
                 style = MaterialTheme.typography.labelMedium,
                 color = colorScheme.onSurfaceVariant,
                 modifier = Modifier.align(Alignment.CenterHorizontally),

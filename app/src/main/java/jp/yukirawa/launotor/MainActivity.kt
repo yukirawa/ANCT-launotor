@@ -112,7 +112,6 @@ class MainActivity : ComponentActivity() {
                 LaundryRoomScreen(
                     uiState = uiState,
                     hasNotificationPermission = hasNotificationPermission,
-                    canPostPromotedNotifications = canPostPromoted,
                     onMachineClick = { spec -> viewModel.selectMachine(spec.id) },
                     onOpenSettings = { viewModel.setSettingsVisible(true) },
                     onClearAllFinished = { viewModel.clearAllFinished() },
@@ -124,7 +123,6 @@ class MainActivity : ComponentActivity() {
                     MachineTimerBottomSheet(
                         state = selectedState,
                         hapticsEnabled = uiState.settings.hapticsEnabled,
-                        nowEpochMillis = uiState.nowEpochMillis,
                         onDismiss = { viewModel.selectMachine(null) },
                         onStartOrUpdate = { minutes ->
                             viewModel.startOrUpdateTimer(selectedState.spec.id, minutes)

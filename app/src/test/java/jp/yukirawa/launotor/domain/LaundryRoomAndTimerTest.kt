@@ -97,4 +97,13 @@ class LaundryRoomAndTimerTest {
         assertEquals("04:59", MachineTimerCalculator.formatCountdown(4 * 60_000L + 58_200L))
         assertEquals("1:05:00", MachineTimerCalculator.formatCountdown(65 * 60_000L))
     }
+
+    @Test
+    fun formatCompactRemainingUsesMinutesAndSecondsCleanly() {
+        assertEquals("0秒", MachineTimerCalculator.formatCompactRemaining(0L))
+        assertEquals("45秒", MachineTimerCalculator.formatCompactRemaining(44_500L))
+        assertEquals("1分", MachineTimerCalculator.formatCompactRemaining(59_200L))
+        assertEquals("24分", MachineTimerCalculator.formatCompactRemaining(24 * 60_000L))
+        assertEquals("65分", MachineTimerCalculator.formatCompactRemaining(65 * 60_000L))
+    }
 }

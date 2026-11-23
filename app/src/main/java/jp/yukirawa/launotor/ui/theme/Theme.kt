@@ -15,40 +15,85 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 @Immutable
-data class LaundrySemanticColors(
-    val availableContainer: Color,
-    val onAvailableContainer: Color,
+data class LaundryExpressiveColors(
+    val washerIdleContainer: Color,
+    val washerIdleContent: Color,
+    val washerRunningContainer: Color,
+    val washerRunningContent: Color,
+    val washerRunningTrack: Color,
+    val washerAccent: Color,
+    val washerOnAccent: Color,
+    val washerAccentSoft: Color,
+    val washerOnAccentSoft: Color,
+    val dryerIdleContainer: Color,
+    val dryerIdleContent: Color,
+    val dryerRunningContainer: Color,
+    val dryerRunningContent: Color,
+    val dryerRunningTrack: Color,
+    val dryerAccent: Color,
+    val dryerOnAccent: Color,
+    val dryerAccentSoft: Color,
+    val dryerOnAccentSoft: Color,
     val almostDoneContainer: Color,
-    val onAlmostDoneContainer: Color,
-    val almostDoneBorder: Color,
+    val almostDoneContent: Color,
+    val almostDoneTrack: Color,
     val finishedContainer: Color,
-    val onFinishedContainer: Color,
-    val finishedBorder: Color,
+    val finishedContent: Color,
 )
 
-private val LightSemanticColors = LaundrySemanticColors(
-    availableContainer = StatusAvailableLight,
-    onAvailableContainer = StatusOnAvailableLight,
-    almostDoneContainer = StatusAlmostDoneLight,
-    onAlmostDoneContainer = StatusOnAlmostDoneLight,
-    almostDoneBorder = StatusAlmostDoneBorderLight,
-    finishedContainer = StatusFinishedLight,
-    onFinishedContainer = StatusOnFinishedLight,
-    finishedBorder = StatusFinishedBorderLight,
+private val LightExpressiveColors = LaundryExpressiveColors(
+    washerIdleContainer = WasherIdleContainerLight,
+    washerIdleContent = WasherIdleContentLight,
+    washerRunningContainer = WasherRunningContainerLight,
+    washerRunningContent = WasherRunningContentLight,
+    washerRunningTrack = WasherRunningTrackLight,
+    washerAccent = WasherAccentLight,
+    washerOnAccent = WasherOnAccentLight,
+    washerAccentSoft = WasherAccentSoftLight,
+    washerOnAccentSoft = WasherOnAccentSoftLight,
+    dryerIdleContainer = DryerIdleContainerLight,
+    dryerIdleContent = DryerIdleContentLight,
+    dryerRunningContainer = DryerRunningContainerLight,
+    dryerRunningContent = DryerRunningContentLight,
+    dryerRunningTrack = DryerRunningTrackLight,
+    dryerAccent = DryerAccentLight,
+    dryerOnAccent = DryerOnAccentLight,
+    dryerAccentSoft = DryerAccentSoftLight,
+    dryerOnAccentSoft = DryerOnAccentSoftLight,
+    almostDoneContainer = AlmostDoneContainerLight,
+    almostDoneContent = AlmostDoneContentLight,
+    almostDoneTrack = AlmostDoneTrackLight,
+    finishedContainer = FinishedContainerLight,
+    finishedContent = FinishedContentLight,
 )
 
-private val DarkSemanticColors = LaundrySemanticColors(
-    availableContainer = StatusAvailableDark,
-    onAvailableContainer = StatusOnAvailableDark,
-    almostDoneContainer = StatusAlmostDoneDark,
-    onAlmostDoneContainer = StatusOnAlmostDoneDark,
-    almostDoneBorder = StatusAlmostDoneBorderDark,
-    finishedContainer = StatusFinishedDark,
-    onFinishedContainer = StatusOnFinishedDark,
-    finishedBorder = StatusFinishedBorderDark,
+private val DarkExpressiveColors = LaundryExpressiveColors(
+    washerIdleContainer = WasherIdleContainerDark,
+    washerIdleContent = WasherIdleContentDark,
+    washerRunningContainer = WasherRunningContainerDark,
+    washerRunningContent = WasherRunningContentDark,
+    washerRunningTrack = WasherRunningTrackDark,
+    washerAccent = WasherAccentDark,
+    washerOnAccent = WasherOnAccentDark,
+    washerAccentSoft = WasherAccentSoftDark,
+    washerOnAccentSoft = WasherOnAccentSoftDark,
+    dryerIdleContainer = DryerIdleContainerDark,
+    dryerIdleContent = DryerIdleContentDark,
+    dryerRunningContainer = DryerRunningContainerDark,
+    dryerRunningContent = DryerRunningContentDark,
+    dryerRunningTrack = DryerRunningTrackDark,
+    dryerAccent = DryerAccentDark,
+    dryerOnAccent = DryerOnAccentDark,
+    dryerAccentSoft = DryerAccentSoftDark,
+    dryerOnAccentSoft = DryerOnAccentSoftDark,
+    almostDoneContainer = AlmostDoneContainerDark,
+    almostDoneContent = AlmostDoneContentDark,
+    almostDoneTrack = AlmostDoneTrackDark,
+    finishedContainer = FinishedContainerDark,
+    finishedContent = FinishedContentDark,
 )
 
-val LocalLaundrySemanticColors = staticCompositionLocalOf { LightSemanticColors }
+val LocalLaundryExpressiveColors = staticCompositionLocalOf { LightExpressiveColors }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -58,17 +103,17 @@ fun LaunotorTheme(
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        darkTheme -> LaunotorDarkColorScheme
-        else -> LaunotorLightColorScheme
+    val colorScheme = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && dynamicColor) {
+        if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+    } else if (darkTheme) {
+        LaunotorDarkColorScheme
+    } else {
+        LaunotorLightColorScheme
     }
 
-    val semanticColors = if (darkTheme) DarkSemanticColors else LightSemanticColors
+    val expressiveColors = if (darkTheme) DarkExpressiveColors else LightExpressiveColors
 
-    CompositionLocalProvider(LocalLaundrySemanticColors provides semanticColors) {
+    CompositionLocalProvider(LocalLaundryExpressiveColors provides expressiveColors) {
         MaterialExpressiveTheme(
             colorScheme = colorScheme,
             motionScheme = MotionScheme.expressive(),

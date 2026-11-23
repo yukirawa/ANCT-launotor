@@ -52,6 +52,7 @@ data class MachineSpec(
 
 object LaundryRoomCatalog {
     const val MIN_DURATION_MINUTES = 1
+    const val SLIDER_MAX_DURATION_MINUTES = 90
     const val MAX_DURATION_MINUTES = 180
     const val TOTAL_WASHERS = 8
     const val TOTAL_DRYERS = 6
@@ -204,5 +205,16 @@ object MachineTimerCalculator {
         if (remainingMillis <= 0L) return "0分"
         val mins = ceil(remainingMillis / 60_000.0).toInt().coerceAtLeast(1)
         return "${mins}分"
+    }
+
+    fun formatCompactRemaining(remainingMillis: Long): String {
+        if (remainingMillis <= 0L) return "0秒"
+        val totalSeconds = ceil(remainingMillis / 1000.0).toLong()
+        return if (totalSeconds >= 60L) {
+            val mins = ceil(remainingMillis / 60_000.0).toLong().coerceAtLeast(1L)
+            "${mins}分"
+        } else {
+            "${totalSeconds}秒"
+        }
     }
 }

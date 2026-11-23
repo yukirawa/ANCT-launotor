@@ -4,90 +4,130 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 
-// Expressive aquatic-teal & warm-amber palette crafted for Launotor
-val CyanPrimaryLight = Color(0xFF00677F)
-val OnCyanPrimaryLight = Color(0xFFFFFFFF)
-val CyanPrimaryContainerLight = Color(0xFFB5EBFF)
-val OnCyanPrimaryContainerLight = Color(0xFF001F28)
+// Joyful Material 3 Expressive palette: vivid sky-cobalt + warm coral-peach + sunny gold + mint
+val SkyPrimaryLight = Color(0xFF0070B8)
+val OnSkyPrimaryLight = Color(0xFFFFFFFF)
+val SkyPrimaryContainerLight = Color(0xFFCFEFFF)
+val OnSkyPrimaryContainerLight = Color(0xFF00243D)
 
-val TealSecondaryLight = Color(0xFF3E6373)
-val OnTealSecondaryLight = Color(0xFFFFFFFF)
-val TealSecondaryContainerLight = Color(0xFFC2E8FA)
-val OnTealSecondaryContainerLight = Color(0xFF001F29)
+val AquaSecondaryLight = Color(0xFF006D77)
+val OnAquaSecondaryLight = Color(0xFFFFFFFF)
+val AquaSecondaryContainerLight = Color(0xFFC5F4F8)
+val OnAquaSecondaryContainerLight = Color(0xFF002024)
 
-val CoralTertiaryLight = Color(0xFF9C4327)
+val CoralTertiaryLight = Color(0xFFD94418)
 val OnCoralTertiaryLight = Color(0xFFFFFFFF)
-val CoralTertiaryContainerLight = Color(0xFFFFDBD0)
-val OnCoralTertiaryContainerLight = Color(0xFF3A0B00)
+val CoralTertiaryContainerLight = Color(0xFFFFDFD3)
+val OnCoralTertiaryContainerLight = Color(0xFF470D00)
 
-val SurfaceLight = Color(0xFFF6FAFD)
-val OnSurfaceLight = Color(0xFF171C1F)
-val SurfaceVariantLight = Color(0xFFDCE4E8)
-val OnSurfaceVariantLight = Color(0xFF40484C)
+val SurfaceLight = Color(0xFFF6FAFF)
+val OnSurfaceLight = Color(0xFF151C22)
+val SurfaceVariantLight = Color(0xFFDCE6EE)
+val OnSurfaceVariantLight = Color(0xFF46535E)
 val SurfaceContainerLowestLight = Color(0xFFFFFFFF)
-val SurfaceContainerLowLight = Color(0xFFF0F4F8)
-val SurfaceContainerLight = Color(0xFFEAEFF3)
-val SurfaceContainerHighLight = Color(0xFFE4E9ED)
-val SurfaceContainerHighestLight = Color(0xFFDEE3E7)
-val OutlineLight = Color(0xFF70787D)
-val OutlineVariantLight = Color(0xFFC0C8CD)
+val SurfaceContainerLowLight = Color(0xFFEEF4FA)
+val SurfaceContainerLight = Color(0xFFE6EEF6)
+val SurfaceContainerHighLight = Color(0xFFDEE7F0)
+val SurfaceContainerHighestLight = Color(0xFFD6E0EA)
+val OutlineLight = Color(0xFF6E7B85)
+val OutlineVariantLight = Color(0xFFBCC8D2)
 
-val CyanPrimaryDark = Color(0xFF6DD4F5)
-val OnCyanPrimaryDark = Color(0xFF003544)
-val CyanPrimaryContainerDark = Color(0xFF004E61)
-val OnCyanPrimaryContainerDark = Color(0xFFB5EBFF)
+val SkyPrimaryDark = Color(0xFF56C6FF)
+val OnSkyPrimaryDark = Color(0xFF002940)
+val SkyPrimaryContainerDark = Color(0xFF004F7D)
+val OnSkyPrimaryContainerDark = Color(0xFFCFEFFF)
 
-val TealSecondaryDark = Color(0xFFA6CCDD)
-val OnTealSecondaryDark = Color(0xFF093543)
-val TealSecondaryContainerDark = Color(0xFF254B5A)
-val OnTealSecondaryContainerDark = Color(0xFFC2E8FA)
+val AquaSecondaryDark = Color(0xFF6AE0EB)
+val OnAquaSecondaryDark = Color(0xFF00363C)
+val AquaSecondaryContainerDark = Color(0xFF004F57)
+val OnAquaSecondaryContainerDark = Color(0xFFC5F4F8)
 
-val CoralTertiaryDark = Color(0xFFFFB59E)
-val OnCoralTertiaryDark = Color(0xFF5D1902)
-val CoralTertiaryContainerDark = Color(0xFF7D2C12)
-val OnCoralTertiaryContainerDark = Color(0xFFFFDBD0)
+val CoralTertiaryDark = Color(0xFFFF8A65)
+val OnCoralTertiaryDark = Color(0xFF420D00)
+val CoralTertiaryContainerDark = Color(0xFF7D2407)
+val OnCoralTertiaryContainerDark = Color(0xFFFFDFD3)
 
-val SurfaceDark = Color(0xFF0F1417)
-val OnSurfaceDark = Color(0xFFDFE3E7)
-val SurfaceVariantDark = Color(0xFF40484C)
-val OnSurfaceVariantDark = Color(0xFFC0C8CD)
-val SurfaceContainerLowestDark = Color(0xFF0A0F12)
-val SurfaceContainerLowDark = Color(0xFF171C1F)
-val SurfaceContainerDark = Color(0xFF1B2023)
-val SurfaceContainerHighDark = Color(0xFF262B2E)
-val SurfaceContainerHighestDark = Color(0xFF303639)
-val OutlineDark = Color(0xFF8A9297)
-val OutlineVariantDark = Color(0xFF40484C)
+val SurfaceDark = Color(0xFF0E1419)
+val OnSurfaceDark = Color(0xFFE1E8EE)
+val SurfaceVariantDark = Color(0xFF3E4A54)
+val OnSurfaceVariantDark = Color(0xFFB7C4CF)
+val SurfaceContainerLowestDark = Color(0xFF090E12)
+val SurfaceContainerLowDark = Color(0xFF161D24)
+val SurfaceContainerDark = Color(0xFF1B232B)
+val SurfaceContainerHighDark = Color(0xFF252E37)
+val SurfaceContainerHighestDark = Color(0xFF2F3943)
+val OutlineDark = Color(0xFF83909A)
+val OutlineVariantDark = Color(0xFF3E4A54)
 
-// Semantic status tokens
-val StatusAvailableLight = Color(0xFFE0F5EC)
-val StatusOnAvailableLight = Color(0xFF0B5237)
-val StatusAvailableDark = Color(0xFF123D2D)
-val StatusOnAvailableDark = Color(0xFF9DE6C4)
+// Washer color family (Light) — Airy Sky Pastel (Idle) -> Bold Cobalt-Azure (Running)
+val WasherIdleContainerLight = Color(0xFFD4F0FF)
+val WasherIdleContentLight = Color(0xFF00496E)
+val WasherRunningContainerLight = Color(0xFF0072BC)
+val WasherRunningContentLight = Color(0xFFFFFFFF)
+val WasherRunningTrackLight = Color(0xFF7ED9FF)
+val WasherAccentLight = Color(0xFF0072BC)
+val WasherOnAccentLight = Color(0xFFFFFFFF)
+val WasherAccentSoftLight = Color(0xFFD0EEFF)
+val WasherOnAccentSoftLight = Color(0xFF004569)
 
-val StatusAlmostDoneLight = Color(0xFFFFECC7)
-val StatusOnAlmostDoneLight = Color(0xFF6B3E00)
-val StatusAlmostDoneBorderLight = Color(0xFFE08600)
-val StatusAlmostDoneDark = Color(0xFF4F3100)
-val StatusOnAlmostDoneDark = Color(0xFFFFD899)
-val StatusAlmostDoneBorderDark = Color(0xFFFFB74D)
+// Washer color family (Dark)
+val WasherIdleContainerDark = Color(0xFF143C54)
+val WasherIdleContentDark = Color(0xFFA8E4FF)
+val WasherRunningContainerDark = Color(0xFF42C0FF)
+val WasherRunningContentDark = Color(0xFF002438)
+val WasherRunningTrackDark = Color(0xFF005A8A)
+val WasherAccentDark = Color(0xFF4FC6FF)
+val WasherOnAccentDark = Color(0xFF00253A)
+val WasherAccentSoftDark = Color(0xFF174561)
+val WasherOnAccentSoftDark = Color(0xFFB5EAFF)
 
-val StatusFinishedLight = Color(0xFFD6F7E8)
-val StatusOnFinishedLight = Color(0xFF005136)
-val StatusFinishedBorderLight = Color(0xFF00875A)
-val StatusFinishedDark = Color(0xFF0D4430)
-val StatusOnFinishedDark = Color(0xFF8CEBC0)
-val StatusFinishedBorderDark = Color(0xFF34D399)
+// Dryer color family (Light) — Warm Peach Pastel (Idle) -> Bold Coral-Vermilion (Running)
+val DryerIdleContainerLight = Color(0xFFFFE3D6)
+val DryerIdleContentLight = Color(0xFF7D2508)
+val DryerRunningContainerLight = Color(0xFFD84315)
+val DryerRunningContentLight = Color(0xFFFFFFFF)
+val DryerRunningTrackLight = Color(0xFFFFC9A8)
+val DryerAccentLight = Color(0xFFD84315)
+val DryerOnAccentLight = Color(0xFFFFFFFF)
+val DryerAccentSoftLight = Color(0xFFFFE0D1)
+val DryerOnAccentSoftLight = Color(0xFF752006)
+
+// Dryer color family (Dark)
+val DryerIdleContainerDark = Color(0xFF4F2317)
+val DryerIdleContentDark = Color(0xFFFFC2AC)
+val DryerRunningContainerDark = Color(0xFFFF855E)
+val DryerRunningContentDark = Color(0xFF3B0C00)
+val DryerRunningTrackDark = Color(0xFF992B09)
+val DryerAccentDark = Color(0xFFFF8B66)
+val DryerOnAccentDark = Color(0xFF3A0C00)
+val DryerAccentSoftDark = Color(0xFF5A291B)
+val DryerOnAccentSoftDark = Color(0xFFFFC7B3)
+
+// Almost Done (まもなく空き) — Energetic Sunny Gold Pop
+val AlmostDoneContainerLight = Color(0xFFFFC42E)
+val AlmostDoneContentLight = Color(0xFF3D2200)
+val AlmostDoneTrackLight = Color(0xFFE07A00)
+
+val AlmostDoneContainerDark = Color(0xFFFFD24C)
+val AlmostDoneContentDark = Color(0xFF361E00)
+val AlmostDoneTrackDark = Color(0xFFA85B00)
+
+// Finished (完了) — Celebratory Mint-Emerald Pop
+val FinishedContainerLight = Color(0xFF1AD48B)
+val FinishedContentLight = Color(0xFF002E1C)
+
+val FinishedContainerDark = Color(0xFF38E59E)
+val FinishedContentDark = Color(0xFF002B19)
 
 val LaunotorLightColorScheme = lightColorScheme(
-    primary = CyanPrimaryLight,
-    onPrimary = OnCyanPrimaryLight,
-    primaryContainer = CyanPrimaryContainerLight,
-    onPrimaryContainer = OnCyanPrimaryContainerLight,
-    secondary = TealSecondaryLight,
-    onSecondary = OnTealSecondaryLight,
-    secondaryContainer = TealSecondaryContainerLight,
-    onSecondaryContainer = OnTealSecondaryContainerLight,
+    primary = SkyPrimaryLight,
+    onPrimary = OnSkyPrimaryLight,
+    primaryContainer = SkyPrimaryContainerLight,
+    onPrimaryContainer = OnSkyPrimaryContainerLight,
+    secondary = AquaSecondaryLight,
+    onSecondary = OnAquaSecondaryLight,
+    secondaryContainer = AquaSecondaryContainerLight,
+    onSecondaryContainer = OnAquaSecondaryContainerLight,
     tertiary = CoralTertiaryLight,
     onTertiary = OnCoralTertiaryLight,
     tertiaryContainer = CoralTertiaryContainerLight,
@@ -108,14 +148,14 @@ val LaunotorLightColorScheme = lightColorScheme(
 )
 
 val LaunotorDarkColorScheme = darkColorScheme(
-    primary = CyanPrimaryDark,
-    onPrimary = OnCyanPrimaryDark,
-    primaryContainer = CyanPrimaryContainerDark,
-    onPrimaryContainer = OnCyanPrimaryContainerDark,
-    secondary = TealSecondaryDark,
-    onSecondary = OnTealSecondaryDark,
-    secondaryContainer = TealSecondaryContainerDark,
-    onSecondaryContainer = OnTealSecondaryContainerDark,
+    primary = SkyPrimaryDark,
+    onPrimary = OnSkyPrimaryDark,
+    primaryContainer = SkyPrimaryContainerDark,
+    onPrimaryContainer = OnSkyPrimaryContainerDark,
+    secondary = AquaSecondaryDark,
+    onSecondary = OnAquaSecondaryDark,
+    secondaryContainer = AquaSecondaryContainerDark,
+    onSecondaryContainer = OnAquaSecondaryContainerDark,
     tertiary = CoralTertiaryDark,
     onTertiary = OnCoralTertiaryDark,
     tertiaryContainer = CoralTertiaryContainerDark,
