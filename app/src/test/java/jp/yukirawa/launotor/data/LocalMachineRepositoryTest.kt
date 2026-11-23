@@ -3,6 +3,12 @@ package jp.yukirawa.launotor.data
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import jp.yukirawa.launotor.data.repository.LocalMachineRepository
 import jp.yukirawa.launotor.domain.model.UpdateSource
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.runTest
 import okio.Path.Companion.toPath
 import org.junit.Assert.assertEquals
@@ -18,10 +24,11 @@ class LocalMachineRepositoryTest {
     val tempFolder = TemporaryFolder()
 
     @Test
-    fun timersAndSettingsPersistAcrossRepositoryInstances() = runTest {
+    fun timersAndSettingsPersistAcrossDistinctDataStoreInstances() = runTest {
         val file = tempFolder.newFile("test_launotor.preferences_pb")
+        val scope1 = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         val dataStore1 = PreferenceDataStoreFactory.createWithPath(
-            scope = backgroundScope,
+            scope = scope1,
             produceFile = { file.absolutePath.toPath() },
         )
         val repo1 = LocalMachineRepository(dataStore1)
@@ -32,19 +39,59 @@ class LocalMachineRepositoryTest {
         assertEquals(now + 25 * 60_000L, started.endTimeEpochMillis)
         assertEquals(UpdateSource.LOCAL, started.updateSource)
 
-        repo1.markAlmostDoneNotified("washer_3", started.endTimeEpochMillis)
+        assertTrue(repo1.claimAlmostDoneNotification("washer_3", started.endTimeEpochMillis))
         repo1.updateAlmostDoneThreshold(10)
         repo1.updateHapticsEnabled(false)
         repo1.updateLiveUpdatesEnabled(false)
 
-        val (records, settings) = repo1.getSnapshot()
-        assertEquals(14, records.size)
-        val w3 = records["washer_3"]!!
-        assertEquals(started.endTimeEpochMillis, w3.endTimeEpochMillis)
-        assertEquals(started.endTimeEpochMillis, w3.almostDoneNotifiedForEndTime)
-        assertEquals(10, settings.almostDoneThresholdMinutes)
-        assertFalse(settings.hapticsEnabled)
-        assertFalse(settings.liveUpdatesEnabled)
+        // Tear down first DataStore scope and reload from a brand new DataStore + repository instance.
+        scope1.cancel()
+
+        val scope2 = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        try {
+            val dataStore2 = PreferenceDataStoreFactory.createWithPath(
+                scope = scope2,
+                produceFile = { file.absolutePath.toPath() },
+            )
+            val repo2 = LocalMachineRepository(dataStore2)
+
+            val (records, settings) = repo2.getSnapshot()
+            assertEquals(14, records.size)
+            val w3 = records["washer_3"]!!
+            assertEquals(started.endTimeEpochMillis, w3.endTimeEpochMillis)
+            assertEquals(started.endTimeEpochMillis, w3.almostDoneNotifiedForEndTime)
+            assertEquals(10, settings.almostDoneThresholdMinutes)
+            assertFalse(settings.hapticsEnabled)
+            assertFalse(settings.liveUpdatesEnabled)
+        } finally {
+            scope2.cancel()
+        }
+    }
+
+    @Test
+    fun atomicClaimNotificationAllowsOnlySingleWinnerUnderConcurrency() = runTest {
+        val file = tempFolder.newFile("test_atomic_claim.preferences_pb")
+        val dataStore = PreferenceDataStoreFactory.createWithPath(
+            scope = backgroundScope,
+            produceFile = { file.absolutePath.toPath() },
+        )
+        val repo = LocalMachineRepository(dataStore)
+
+        val now = 1_700_000_000_000L
+        val started = repo.startOrUpdateTimer("dryer_1", 20, now)
+
+        val almostClaims = (1..10).map {
+            async { repo.claimAlmostDoneNotification("dryer_1", started.endTimeEpochMillis) }
+        }.awaitAll()
+        assertEquals(1, almostClaims.count { it })
+
+        val finishedClaims = (1..10).map {
+            async { repo.claimFinishedNotification("dryer_1", started.endTimeEpochMillis) }
+        }.awaitAll()
+        assertEquals(1, finishedClaims.count { it })
+
+        // Claiming with a stale endTime must return false.
+        assertFalse(repo.claimAlmostDoneNotification("dryer_1", started.endTimeEpochMillis + 1000L))
     }
 
     @Test

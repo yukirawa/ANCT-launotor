@@ -52,19 +52,27 @@ object NotificationHelper {
         for (due in dueList) {
             when (due.kind) {
                 AlarmKind.ALMOST_DONE -> {
-                    if (canNotify) {
+                    val claimed = repository.claimAlmostDoneNotification(
+                        machineId = due.machine.id,
+                        endTimeEpochMillis = due.endTimeEpochMillis,
+                    )
+                    if (claimed && canNotify) {
                         postAlmostDoneNotification(context, manager, due)
                     }
-                    repository.markAlmostDoneNotified(due.machine.id, due.endTimeEpochMillis)
                 }
 
                 AlarmKind.FINISHED -> {
-                    // Cancel prior almost-done notification for this machine when finished.
-                    manager.cancel(notificationIdFor(due.machine.id, AlarmKind.ALMOST_DONE))
-                    if (canNotify) {
-                        postFinishedNotification(context, manager, due)
+                    val claimed = repository.claimFinishedNotification(
+                        machineId = due.machine.id,
+                        endTimeEpochMillis = due.endTimeEpochMillis,
+                    )
+                    if (claimed) {
+                        // Cancel prior almost-done notification for this machine when finished.
+                        manager.cancel(notificationIdFor(due.machine.id, AlarmKind.ALMOST_DONE))
+                        if (canNotify) {
+                            postFinishedNotification(context, manager, due)
+                        }
                     }
-                    repository.markFinishedNotified(due.machine.id, due.endTimeEpochMillis)
                 }
             }
         }

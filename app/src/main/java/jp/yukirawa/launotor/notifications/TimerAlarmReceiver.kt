@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import jp.yukirawa.launotor.LaunotorApplication
+import jp.yukirawa.launotor.domain.model.LaundryRoomCatalog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -19,7 +20,7 @@ class TimerAlarmReceiver : BroadcastReceiver() {
             try {
                 if (intent.action == NotificationHelper.ACTION_MARK_FREE) {
                     val machineId = intent.getStringExtra(NotificationHelper.EXTRA_MACHINE_ID)
-                    if (machineId != null) {
+                    if (machineId != null && LaundryRoomCatalog.findById(machineId) != null) {
                         repository.clearTimer(machineId)
                         AlertScheduler.cancelMachineAlarms(context, machineId)
                         NotificationHelper.cancelMachineNotifications(context, machineId)

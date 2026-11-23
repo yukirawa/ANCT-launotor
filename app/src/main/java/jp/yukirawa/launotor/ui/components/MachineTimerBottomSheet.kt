@@ -97,7 +97,7 @@ fun MachineTimerBottomSheet(
                     LaundryRoomCatalog.MIN_DURATION_MINUTES,
                     LaundryRoomCatalog.MAX_DURATION_MINUTES,
                 )
-            else -> if (state.spec.type == MachineType.WASHER) 30 else 30
+            else -> 30
         }
     }
 

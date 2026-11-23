@@ -4,12 +4,14 @@ import android.Manifest
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.core.app.ActivityCompat
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -52,12 +54,36 @@ class MainActivity : ComponentActivity() {
                 var canPostPromoted by remember {
                     mutableStateOf(LiveUpdateSupport.canPostPromotedNotifications(context))
                 }
+                var permissionDeniedPermanently by remember { mutableStateOf(false) }
 
                 val permissionLauncher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.RequestPermission(),
                 ) { granted ->
                     hasNotificationPermission = granted || NotificationHelper.hasPostNotificationPermission(context)
                     canPostPromoted = LiveUpdateSupport.canPostPromotedNotifications(context)
+                    if (!granted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        permissionDeniedPermanently = !ActivityCompat.shouldShowRequestPermissionRationale(
+                            this@MainActivity,
+                            Manifest.permission.POST_NOTIFICATIONS,
+                        )
+                    }
+                }
+
+                fun requestOrOpenNotificationSettings() {
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+                    val canPrompt = !permissionDeniedPermanently ||
+                        ActivityCompat.shouldShowRequestPermissionRationale(
+                            this@MainActivity,
+                            Manifest.permission.POST_NOTIFICATIONS,
+                        )
+                    if (canPrompt) {
+                        permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    } else {
+                        val settingsIntent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                        }
+                        runCatching { context.startActivity(settingsIntent) }
+                    }
                 }
 
                 DisposableEffect(lifecycleOwner) {
@@ -90,11 +116,7 @@ class MainActivity : ComponentActivity() {
                     onMachineClick = { spec -> viewModel.selectMachine(spec.id) },
                     onOpenSettings = { viewModel.setSettingsVisible(true) },
                     onClearAllFinished = { viewModel.clearAllFinished() },
-                    onRequestNotificationPermission = {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                        }
-                    },
+                    onRequestNotificationPermission = ::requestOrOpenNotificationSettings,
                 )
 
                 val selectedState = selectedMachineId?.let { uiState.machineStates[it] }
@@ -118,11 +140,7 @@ class MainActivity : ComponentActivity() {
                         settings = uiState.settings,
                         canPostPromoted = canPostPromoted,
                         hasNotificationPermission = hasNotificationPermission,
-                        onRequestNotificationPermission = {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                            }
-                        },
+                        onRequestNotificationPermission = ::requestOrOpenNotificationSettings,
                         onUpdateThresholdMinutes = { mins ->
                             viewModel.updateAlmostDoneThreshold(mins)
                         },

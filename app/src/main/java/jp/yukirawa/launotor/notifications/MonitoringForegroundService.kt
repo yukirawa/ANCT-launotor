@@ -18,10 +18,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class MonitoringForegroundService : Service() {
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val updateMutex = Mutex()
     private var monitorJob: Job? = null
     private var tickerJob: Job? = null
     private var foregroundStarted = false
@@ -76,63 +79,65 @@ class MonitoringForegroundService : Service() {
         records: Map<String, jp.yukirawa.launotor.domain.model.MachineTimerRecord>,
         settings: jp.yukirawa.launotor.domain.model.AppSettings,
     ) {
-        val repository = (application as LaunotorApplication).repository
-        val now = System.currentTimeMillis()
+        updateMutex.withLock {
+            val repository = (application as LaunotorApplication).repository
+            val now = System.currentTimeMillis()
 
-        NotificationHelper.dispatchDueNotifications(
-            context = this,
-            repository = repository,
-            records = records,
-            settings = settings,
-            nowEpochMillis = now,
-        )
+            NotificationHelper.dispatchDueNotifications(
+                context = this,
+                repository = repository,
+                records = records,
+                settings = settings,
+                nowEpochMillis = now,
+            )
 
-        val model = TimerNotificationPlanner.buildLiveUpdateModel(
-            records = records,
-            settings = settings,
-            nowEpochMillis = now,
-        )
+            val model = TimerNotificationPlanner.buildLiveUpdateModel(
+                records = records,
+                settings = settings,
+                nowEpochMillis = now,
+            )
 
-        if (model == null) {
+            if (model == null) {
+                if (!foregroundStarted) {
+                    // Satisfy startForegroundService() contract before stopping so Android never throws
+                    // ForegroundServiceDidNotStartInTimeException when a timer expires mid-launch.
+                    val placeholder = NotificationHelper.buildServiceIdleNotification(this)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                        startForeground(
+                            LiveUpdateNotificationBuilder.LIVE_NOTIFICATION_ID,
+                            placeholder,
+                            ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE,
+                        )
+                    } else {
+                        startForeground(LiveUpdateNotificationBuilder.LIVE_NOTIFICATION_ID, placeholder)
+                    }
+                    foregroundStarted = true
+                }
+                stopSelfSafely()
+                return@withLock
+            }
+
+            val notification = LiveUpdateNotificationBuilder.build(
+                context = this,
+                model = model,
+                requestPromotedOngoing = settings.liveUpdatesEnabled,
+            )
+
             if (!foregroundStarted) {
-                // Satisfy startForegroundService() contract before stopping so Android never throws
-                // ForegroundServiceDidNotStartInTimeException when a timer expires mid-launch.
-                val placeholder = NotificationHelper.buildServiceIdleNotification(this)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                     startForeground(
                         LiveUpdateNotificationBuilder.LIVE_NOTIFICATION_ID,
-                        placeholder,
+                        notification,
                         ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE,
                     )
                 } else {
-                    startForeground(LiveUpdateNotificationBuilder.LIVE_NOTIFICATION_ID, placeholder)
+                    startForeground(LiveUpdateNotificationBuilder.LIVE_NOTIFICATION_ID, notification)
                 }
                 foregroundStarted = true
+            } else if (NotificationHelper.hasPostNotificationPermission(this)) {
+                getSystemService(NotificationManager::class.java)
+                    ?.notify(LiveUpdateNotificationBuilder.LIVE_NOTIFICATION_ID, notification)
             }
-            stopSelfSafely()
-            return
-        }
-
-        val notification = LiveUpdateNotificationBuilder.build(
-            context = this,
-            model = model,
-            requestPromotedOngoing = settings.liveUpdatesEnabled,
-        )
-
-        if (!foregroundStarted) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                startForeground(
-                    LiveUpdateNotificationBuilder.LIVE_NOTIFICATION_ID,
-                    notification,
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE,
-                )
-            } else {
-                startForeground(LiveUpdateNotificationBuilder.LIVE_NOTIFICATION_ID, notification)
-            }
-            foregroundStarted = true
-        } else if (NotificationHelper.hasPostNotificationPermission(this)) {
-            getSystemService(NotificationManager::class.java)
-                ?.notify(LiveUpdateNotificationBuilder.LIVE_NOTIFICATION_ID, notification)
         }
     }
 

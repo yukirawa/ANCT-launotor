@@ -92,7 +92,7 @@ fun LaundryRoomScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 10.dp, vertical = 8.dp),
+                .padding(horizontal = 8.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             // Expressive Header
@@ -121,6 +121,7 @@ fun LaundryRoomScreen(
                                     color = colorScheme.onSurface,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f, fill = false),
                                 )
                                 Surface(
                                     shape = MaterialTheme.shapes.extraSmall,
@@ -131,6 +132,8 @@ fun LaundryRoomScreen(
                                         text = stringResource(R.string.app_sub_name),
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Bold,
+                                        maxLines = 1,
+                                        softWrap = false,
                                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                     )
                                 }
@@ -188,19 +191,29 @@ fun LaundryRoomScreen(
                         )
 
                         if (LiveUpdateSupport.isAndroid16OrHigher()) {
+                            val liveEnabled = uiState.settings.liveUpdatesEnabled
+                            val (badgeBg, badgeFg, badgeLabel) = when {
+                                !liveEnabled -> Triple(
+                                    colorScheme.surfaceContainerHigh,
+                                    colorScheme.onSurfaceVariant,
+                                    "Live Updates OFF",
+                                )
+                                canPostPromotedNotifications -> Triple(
+                                    colorScheme.secondaryContainer,
+                                    colorScheme.onSecondaryContainer,
+                                    "Live Updates ON",
+                                )
+                                else -> Triple(
+                                    colorScheme.tertiaryContainer,
+                                    colorScheme.onTertiaryContainer,
+                                    "Live Updates 要許可",
+                                )
+                            }
                             Surface(
                                 onClick = onOpenSettings,
                                 shape = MaterialTheme.shapes.small,
-                                color = if (canPostPromotedNotifications) {
-                                    colorScheme.secondaryContainer
-                                } else {
-                                    colorScheme.tertiaryContainer
-                                },
-                                contentColor = if (canPostPromotedNotifications) {
-                                    colorScheme.onSecondaryContainer
-                                } else {
-                                    colorScheme.onTertiaryContainer
-                                },
+                                color = badgeBg,
+                                contentColor = badgeFg,
                             ) {
                                 Row(
                                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
@@ -208,18 +221,20 @@ fun LaundryRoomScreen(
                                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Rounded.NotificationsActive,
+                                        imageVector = if (liveEnabled) {
+                                            Icons.Rounded.NotificationsActive
+                                        } else {
+                                            Icons.Rounded.NotificationsOff
+                                        },
                                         contentDescription = null,
                                         modifier = Modifier.size(14.dp),
                                     )
                                     Text(
-                                        text = if (canPostPromotedNotifications) {
-                                            "Live Updates ON"
-                                        } else {
-                                            "Live Updates 要許可"
-                                        },
+                                        text = badgeLabel,
                                         style = MaterialTheme.typography.labelMedium,
                                         fontWeight = FontWeight.SemiBold,
+                                        maxLines = 1,
+                                        softWrap = false,
                                     )
                                 }
                             }
@@ -288,24 +303,24 @@ fun LaundryRoomScreen(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Column(
-                    modifier = Modifier.padding(8.dp),
+                    modifier = Modifier.padding(6.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     // Zone guide strip
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(5.dp),
                     ) {
                         ZoneHeaderLabel(
-                            text = "洗濯機 (1-4)",
+                            text = "洗濯機 1-4",
                             modifier = Modifier.weight(1f),
                         )
                         ZoneHeaderLabel(
-                            text = "中央 乾燥機アイランド (1-6)",
-                            modifier = Modifier.weight(2.05f),
+                            text = "中央 乾燥機 (1-6)",
+                            modifier = Modifier.weight(2.25f),
                         )
                         ZoneHeaderLabel(
-                            text = "洗濯機 (5-8)",
+                            text = "洗濯機 5-8",
                             modifier = Modifier.weight(1f),
                         )
                     }
@@ -313,7 +328,7 @@ fun LaundryRoomScreen(
                     // 3-zone spatial floor plan
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(5.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         // Left Wall: Washers 1..4
@@ -334,18 +349,18 @@ fun LaundryRoomScreen(
 
                         // Center Island: Dryers 1..3 (left) & 4..6 (right)
                         Surface(
-                            modifier = Modifier.weight(2.05f),
+                            modifier = Modifier.weight(2.25f),
                             shape = MaterialTheme.shapes.large,
                             color = colorScheme.surfaceContainerLow,
                             border = BorderStroke(1.dp, colorScheme.outlineVariant.copy(alpha = 0.7f)),
                         ) {
                             Column(
-                                modifier = Modifier.padding(6.dp),
+                                modifier = Modifier.padding(4.dp),
                                 verticalArrangement = Arrangement.spacedBy(8.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                             ) {
                                 Text(
-                                    text = "通路 ◀ アイランド ▶ 通路",
+                                    text = "◀ アイランド ▶",
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Medium,
                                     color = colorScheme.onSurfaceVariant,
@@ -355,7 +370,7 @@ fun LaundryRoomScreen(
 
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(5.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
                                 ) {
                                     // Island Left: Dryers 1..3
                                     Column(

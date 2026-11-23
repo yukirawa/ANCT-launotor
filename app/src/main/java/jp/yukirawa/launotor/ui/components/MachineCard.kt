@@ -157,12 +157,20 @@ fun MachineCard(
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 6.dp, vertical = 7.dp),
+                .padding(horizontal = 4.dp, vertical = 6.dp),
         ) {
-            val compactWidth = maxWidth < 82.dp
-            val titleFontSize = if (compactWidth) 10.sp else 11.5.sp
-            val countdownFontSize = if (compactWidth) 15.sp else 17.sp
             val density = LocalDensity.current
+            val compactWidth = maxWidth < 84.dp
+            val fontScaleGuard = density.fontScale.coerceIn(1f, 1.35f)
+            val titleFontSize = (if (compactWidth) 10.5f else 11.5f) / fontScaleGuard
+            val countdownText = MachineTimerCalculator.formatCountdown(state.remainingMillis)
+            val isLongCountdown = countdownText.length > 5
+            val countdownFontSize = when {
+                isLongCountdown && compactWidth -> 12.5f / fontScaleGuard
+                isLongCountdown -> 14f / fontScaleGuard
+                compactWidth -> 15f / fontScaleGuard
+                else -> 17f / fontScaleGuard
+            }
             val waveStroke = with(density) {
                 Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
             }
@@ -183,7 +191,7 @@ fun MachineCard(
                 ) {
                     Text(
                         text = state.spec.fullNameNoSpace,
-                        fontSize = titleFontSize,
+                        fontSize = titleFontSize.sp,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         softWrap = false,
@@ -199,7 +207,7 @@ fun MachineCard(
                     Icon(
                         imageVector = badgeIcon,
                         contentDescription = null,
-                        modifier = Modifier.size(13.dp),
+                        modifier = Modifier.size(if (compactWidth) 12.dp else 13.dp),
                         tint = when (state.status) {
                             MachineStatus.IDLE -> colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                             else -> contentColor
@@ -222,7 +230,7 @@ fun MachineCard(
                             ) {
                                 Text(
                                     text = "空き",
-                                    fontSize = if (compactWidth) 11.sp else 12.sp,
+                                    fontSize = (if (compactWidth) 11f else 12f).sp,
                                     fontWeight = FontWeight.Bold,
                                     color = semantic.onAvailableContainer,
                                     maxLines = 1,
@@ -233,9 +241,9 @@ fun MachineCard(
 
                         MachineStatus.RUNNING, MachineStatus.ALMOST_DONE -> {
                             Text(
-                                text = MachineTimerCalculator.formatCountdown(state.remainingMillis),
+                                text = countdownText,
                                 style = TabularCountdownStyle.copy(
-                                    fontSize = countdownFontSize,
+                                    fontSize = countdownFontSize.sp,
                                     color = contentColor,
                                 ),
                                 maxLines = 1,
@@ -243,7 +251,7 @@ fun MachineCard(
                             )
                             Text(
                                 text = if (state.status == MachineStatus.ALMOST_DONE) "まもなく" else "稼働中",
-                                fontSize = 9.5.sp,
+                                fontSize = (9.5f / fontScaleGuard.coerceAtMost(1.2f)).sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = contentColor.copy(alpha = 0.85f),
                                 maxLines = 1,
@@ -254,15 +262,15 @@ fun MachineCard(
                         MachineStatus.FINISHED -> {
                             Text(
                                 text = "完了！",
-                                fontSize = if (compactWidth) 14.sp else 16.sp,
+                                fontSize = (if (compactWidth) 14f else 16f).sp,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = contentColor,
                                 maxLines = 1,
                                 softWrap = false,
                             )
                             Text(
-                                text = "空きにする",
-                                fontSize = 9.5.sp,
+                                text = if (compactWidth) "空きへ" else "空きにする",
+                                fontSize = (9.5f / fontScaleGuard.coerceAtMost(1.2f)).sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = contentColor.copy(alpha = 0.9f),
                                 maxLines = 1,
@@ -296,8 +304,8 @@ fun MachineCard(
 
                     MachineStatus.IDLE -> {
                         Text(
-                            text = "タップで開始",
-                            fontSize = 9.sp,
+                            text = if (compactWidth) "開始" else "タップで開始",
+                            fontSize = (9f / fontScaleGuard.coerceAtMost(1.15f)).sp,
                             color = colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                             maxLines = 1,
                             softWrap = false,

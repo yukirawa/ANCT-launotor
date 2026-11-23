@@ -1,6 +1,7 @@
 package jp.yukirawa.launotor.notifications
 
 import jp.yukirawa.launotor.domain.model.AppSettings
+import jp.yukirawa.launotor.domain.model.LaundryRoomCatalog
 import jp.yukirawa.launotor.domain.model.MachineStatus
 import jp.yukirawa.launotor.domain.model.MachineTimerRecord
 import org.junit.Assert.assertEquals
@@ -146,5 +147,29 @@ class TimerNotificationPlannerTest {
             nowEpochMillis = now,
         )
         assertNull(model)
+    }
+
+    @Test
+    fun simultaneousAll14MachinesMonitoringTracksSoonestAndAllAlarms() {
+        val now = 1_700_000_000_000L
+        val records = LaundryRoomCatalog.allMachines.mapIndexed { idx, spec ->
+            val durationMin = 10 + idx * 3
+            spec.id to MachineTimerRecord(
+                machineId = spec.id,
+                initialDurationMillis = durationMin * 60_000L,
+                endTimeEpochMillis = now + durationMin * 60_000L,
+            )
+        }.toMap()
+
+        val settings = AppSettings(almostDoneThresholdMinutes = 5)
+        val alarms = TimerNotificationPlanner.computeScheduledAlarms(records, settings, now)
+        assertEquals(28, alarms.size)
+
+        val liveModel = TimerNotificationPlanner.buildLiveUpdateModel(records, settings, now)
+        assertNotNull(liveModel)
+        liveModel!!
+        assertEquals("washer_1", liveModel.primaryMachine.id)
+        assertEquals(14, liveModel.activeCount)
+        assertEquals(0, liveModel.finishedCount)
     }
 }

@@ -21,7 +21,7 @@
 - **Android 16 Live Updates API (API 36) 完全準拠**
   - `NotificationCompat.ProgressStyle`・`setRequestPromotedOngoing(true)`・`setShortCriticalText(...)` によるステータスバーチップおよび進行状況の常駐表示に対応（API 26〜35 では標準の進行状況常駐通知へ自動フォールバック）。
 - **Material 3 Expressive UI**
-  - `androidx.compose.material3:material3:1.5.0`、`MaterialExpressiveTheme`、`MotionScheme.expressive()`、`LinearWavyProgressIndicator` / `CircularWavyProgressIndicator`、`ButtonGroup` / `FilledTonalToggleButton`、等幅数字（`tnum`）、Dynamic Color（Light/Dark）、エッジツーエッジ表示に対応。
+  - `androidx.compose.material3:material3:1.5.0-alpha18`（`compileSdk = 36` 対応 1.5.x Expressive リリース）、`MaterialExpressiveTheme`、`MotionScheme.expressive()`、`LinearWavyProgressIndicator` / `CircularWavyProgressIndicator`、`ButtonGroup` / `TonalToggleButton`、等幅数字（`tnum`）、Dynamic Color（Light/Dark）、エッジツーエッジ表示に対応。
 
 ---
 

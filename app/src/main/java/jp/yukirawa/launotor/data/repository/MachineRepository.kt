@@ -30,15 +30,15 @@ interface MachineRepository {
         nowEpochMillis: Long = System.currentTimeMillis(),
     ): List<String>
 
-    suspend fun markAlmostDoneNotified(
+    suspend fun claimAlmostDoneNotification(
         machineId: String,
         endTimeEpochMillis: Long,
-    )
+    ): Boolean
 
-    suspend fun markFinishedNotified(
+    suspend fun claimFinishedNotification(
         machineId: String,
         endTimeEpochMillis: Long,
-    )
+    ): Boolean
 
     suspend fun updateAlmostDoneThreshold(minutes: Int)
 

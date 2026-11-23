@@ -109,28 +109,36 @@ class LocalMachineRepository(
         return clearedIds
     }
 
-    override suspend fun markAlmostDoneNotified(
+    override suspend fun claimAlmostDoneNotification(
         machineId: String,
         endTimeEpochMillis: Long,
-    ) {
+    ): Boolean {
+        var claimed = false
         dataStore.edit { prefs ->
             val currentEnd = prefs[endTimeKey(machineId)] ?: 0L
-            if (currentEnd == endTimeEpochMillis) {
+            val alreadyNotifiedEnd = prefs[almostDoneNotifiedKey(machineId)] ?: 0L
+            if (currentEnd == endTimeEpochMillis && alreadyNotifiedEnd != endTimeEpochMillis) {
                 prefs[almostDoneNotifiedKey(machineId)] = endTimeEpochMillis
+                claimed = true
             }
         }
+        return claimed
     }
 
-    override suspend fun markFinishedNotified(
+    override suspend fun claimFinishedNotification(
         machineId: String,
         endTimeEpochMillis: Long,
-    ) {
+    ): Boolean {
+        var claimed = false
         dataStore.edit { prefs ->
             val currentEnd = prefs[endTimeKey(machineId)] ?: 0L
-            if (currentEnd == endTimeEpochMillis) {
+            val alreadyNotifiedEnd = prefs[finishedNotifiedKey(machineId)] ?: 0L
+            if (currentEnd == endTimeEpochMillis && alreadyNotifiedEnd != endTimeEpochMillis) {
                 prefs[finishedNotifiedKey(machineId)] = endTimeEpochMillis
+                claimed = true
             }
         }
+        return claimed
     }
 
     override suspend fun updateAlmostDoneThreshold(minutes: Int) {
