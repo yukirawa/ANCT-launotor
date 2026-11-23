@@ -4,7 +4,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -33,17 +32,20 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.TonalToggleButton
+import androidx.compose.material3.FilledTonalToggleButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberBottomSheetState
+import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -74,7 +76,6 @@ import kotlin.math.roundToInt
 @OptIn(
     ExperimentalMaterial3Api::class,
     ExperimentalMaterial3ExpressiveApi::class,
-    ExperimentalLayoutApi::class,
 )
 @Composable
 fun MachineTimerBottomSheet(
@@ -85,7 +86,10 @@ fun MachineTimerBottomSheet(
     onStartOrUpdate: (durationMinutes: Int) -> Unit,
     onClearTimer: () -> Unit,
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val sheetState = rememberBottomSheetState(
+        initialValue = SheetValue.Hidden,
+        enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded),
+    )
     val haptic = LocalHapticFeedback.current
     val colorScheme = MaterialTheme.colorScheme
     val semantic = LocalLaundrySemanticColors.current
@@ -103,6 +107,16 @@ fun MachineTimerBottomSheet(
 
     var selectedMinutes by remember(state.spec.id) { mutableIntStateOf(defaultMinutes) }
     var textFieldValue by remember(state.spec.id) { mutableStateOf(defaultMinutes.toString()) }
+    val sliderState = rememberSliderState(
+        value = defaultMinutes.toFloat(),
+        trackRange = LaundryRoomCatalog.MIN_DURATION_MINUTES.toFloat()..LaundryRoomCatalog.MAX_DURATION_MINUTES.toFloat(),
+    )
+
+    LaunchedEffect(selectedMinutes) {
+        if (!sliderState.isDragging) {
+            sliderState.value = selectedMinutes.toFloat()
+        }
+    }
 
     fun setMinutes(newMinutes: Int, performTickHaptic: Boolean = true) {
         val clamped = newMinutes.coerceIn(
@@ -334,7 +348,7 @@ fun MachineTimerBottomSheet(
                 ) {
                     state.spec.type.presetMinutes.forEach { preset ->
                         val isSelected = selectedMinutes == preset
-                        TonalToggleButton(
+                        FilledTonalToggleButton(
                             checked = isSelected,
                             onCheckedChange = { setMinutes(preset) },
                         ) {
@@ -383,14 +397,14 @@ fun MachineTimerBottomSheet(
 
                     Column(modifier = Modifier.weight(1f)) {
                         Slider(
-                            value = selectedMinutes.toFloat(),
+                            state = sliderState,
                             onValueChange = { value ->
+                                sliderState.value = value
                                 val rounded = value.roundToInt()
                                 if (rounded != selectedMinutes) {
                                     setMinutes(rounded, performTickHaptic = false)
                                 }
                             },
-                            valueRange = LaundryRoomCatalog.MIN_DURATION_MINUTES.toFloat()..LaundryRoomCatalog.MAX_DURATION_MINUTES.toFloat(),
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth(),

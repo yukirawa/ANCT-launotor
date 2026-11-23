@@ -1,6 +1,6 @@
 # 洗濯乾燥機時間監視 (Launotor)
 
-**v0.1.0** — ランドリールームの配置そのままに、全14台の洗濯機・乾燥機の残り時間を同時にリアルタイム監視できる Android アプリです。
+**v0.2.0** — ランドリールームの配置そのままに、全14台の洗濯機・乾燥機の残り時間を同時にリアルタイム監視できる Android アプリです。
 
 ---
 
@@ -18,31 +18,32 @@
 - **まもなく空き通知 & 完了アラート**
   - まもなく空き通知（例: `洗濯機1が空きそうです（残り5分）`、設定で `OFF / 3 / 5 / 10分前` を変更可能。開始時間がしきい値以下の場合はスキップ）。
   - 完了通知（例: `乾燥機4が空きました！`、高重要度アラート＋通知からの「空きにする」クイックアクション）。
-- **Android 16 Live Updates API (API 36) 完全準拠**
+- **Android 16+ Live Updates API (API 36 / 37) 完全準拠**
   - `NotificationCompat.ProgressStyle`・`setRequestPromotedOngoing(true)`・`setShortCriticalText(...)` によるステータスバーチップおよび進行状況の常駐表示に対応（API 26〜35 では標準の進行状況常駐通知へ自動フォールバック）。
 - **Material 3 Expressive UI**
-  - `androidx.compose.material3:material3:1.5.0-alpha18`（`compileSdk = 36` 対応 1.5.x Expressive リリース）、`MaterialExpressiveTheme`、`MotionScheme.expressive()`、`LinearWavyProgressIndicator` / `CircularWavyProgressIndicator`、`ButtonGroup` / `TonalToggleButton`、等幅数字（`tnum`）、Dynamic Color（Light/Dark）、エッジツーエッジ表示に対応。
+  - `androidx.compose.material3:material3:1.5.0`（安定版 1.5.0 Expressive リリース）、`MaterialExpressiveTheme`、`MotionScheme.expressive()`、`LinearWavyProgressIndicator` / `CircularWavyProgressIndicator`、`ButtonGroup` / `FilledTonalToggleButton`、等幅数字（`tnum`）、Dynamic Color（Light/Dark）、エッジツーエッジ表示に対応。
 
 ---
 
 ## English Overview
 
-**Launotor (`洗濯乾燥機時間監視`)** is a Material 3 Expressive Android app (`minSdk 26`, `targetSdk 36`) for simultaneously monitoring 14 laundry machines arranged in the exact physical room layout:
+**Launotor (`洗濯乾燥機時間監視`)** is a Material 3 Expressive Android app (`minSdk 26`, `compileSdk 37`, `targetSdk 37`) for simultaneously monitoring 14 laundry machines arranged in the exact physical room layout:
 
 - **Left wall**: Washers `1–4`
 - **Center island**: Dryers `1–3` (left) & `4–6` (right)
 - **Right wall**: Washers `5–8`
 
-It persists epoch end-times in Jetpack DataStore, reschedules `AlarmManager` alerts across process death and device reboots, and integrates Android 16's **Live Updates API** (`ProgressStyle`, promoted ongoing chip, `canPostPromotedNotifications()`) with graceful fallback on Android 8.0–15.
+It persists epoch end-times in Jetpack DataStore, reschedules `AlarmManager` alerts across process death and device reboots, and integrates Android 16+ **Live Updates API** (`ProgressStyle`, promoted ongoing chip, `canPostPromotedNotifications()`) with graceful fallback on Android 8.0–15.
 
 ---
 
 ## ビルド・テスト / Build & Test
 
 ```bash
-./gradlew testDebugUnitTest lintDebug assembleDebug
+./gradlew clean testDebugUnitTest lintDebug assembleRelease
 ```
 
 - Application ID: `jp.yukirawa.launotor`
-- Version: `0.1.0` (`versionCode = 1`)
-- Min / Target / Compile SDK: `26 / 36 / 36`
+- Version: `0.2.0` (`versionCode = 2`)
+- Min / Target / Compile SDK: `26 / 37 / 37`
+- Material 3: `androidx.compose.material3:material3:1.5.0`
