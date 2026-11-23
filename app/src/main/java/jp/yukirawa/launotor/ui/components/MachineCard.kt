@@ -150,7 +150,7 @@ fun MachineCard(
             if (state.status == MachineStatus.RUNNING || state.status == MachineStatus.ALMOST_DONE) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     val strokePx = (if (isCompact) 3.dp else 3.5.dp).toPx()
-                    val inset = size.minDimension * 0.14f
+                    val inset = size.minDimension * PROGRESS_ARC_INSET_FRACTION
                     val arcSize = Size(
                         width = size.width - inset * 2f,
                         height = size.height - inset * 2f,

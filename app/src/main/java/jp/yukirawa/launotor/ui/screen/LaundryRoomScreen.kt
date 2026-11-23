@@ -41,6 +41,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -92,7 +94,6 @@ fun LaundryRoomScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 10.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
@@ -102,7 +103,10 @@ fun LaundryRoomScreen(
                     maxLines = 1,
                     softWrap = false,
                     overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
                 )
+
+                Spacer(modifier = Modifier.width(8.dp))
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -113,12 +117,14 @@ fun LaundryRoomScreen(
                         count = uiState.availableWashers,
                         containerColor = expressive.washerAccentSoft,
                         contentColor = expressive.washerOnAccentSoft,
+                        contentDescription = "洗濯機の空き ${uiState.availableWashers}台",
                     )
                     CompactCountPill(
                         icon = Icons.Rounded.WbSunny,
                         count = uiState.availableDryers,
                         containerColor = expressive.dryerAccentSoft,
                         contentColor = expressive.dryerOnAccentSoft,
+                        contentDescription = "乾燥機の空き ${uiState.availableDryers}台",
                     )
                     FilledTonalIconButton(onClick = onOpenSettings) {
                         Icon(
@@ -289,11 +295,15 @@ private fun CompactCountPill(
     count: Int,
     containerColor: Color,
     contentColor: Color,
+    contentDescription: String,
 ) {
     Surface(
         shape = CircleShape,
         color = containerColor,
         contentColor = contentColor,
+        modifier = Modifier.semantics(mergeDescendants = true) {
+            this.contentDescription = contentDescription
+        },
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),

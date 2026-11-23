@@ -25,6 +25,8 @@ import androidx.graphics.shapes.RoundedPolygon
 import jp.yukirawa.launotor.domain.model.MachineStatus
 import jp.yukirawa.launotor.domain.model.MachineType
 
+internal const val PROGRESS_ARC_INSET_FRACTION = 0.155f
+
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 class MorphPolygonShape(
     private val morph: Morph,
@@ -61,7 +63,7 @@ fun machinePolygon(
             MachineType.WASHER -> MaterialShapes.Cookie9Sided
             MachineType.DRYER -> MaterialShapes.Cookie6Sided
         }
-        MachineStatus.ALMOST_DONE -> MaterialShapes.SoftBurst
+        MachineStatus.ALMOST_DONE -> MaterialShapes.Cookie12Sided
         MachineStatus.FINISHED -> MaterialShapes.Sunny
     }
 }

@@ -36,6 +36,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import jp.yukirawa.launotor.BuildConfig
 import jp.yukirawa.launotor.domain.model.AppSettings
@@ -164,6 +165,7 @@ fun SettingsSheet(
                                     style = MaterialTheme.typography.titleSmall,
                                     maxLines = 1,
                                     softWrap = false,
+                                    overflow = TextOverflow.Ellipsis,
                                 )
                                 Text(
                                     text = "残り時間を通知やステータスバーに表示",
@@ -172,6 +174,7 @@ fun SettingsSheet(
                                 )
                             }
                         }
+                        Spacer(Modifier.width(12.dp))
                         Switch(
                             checked = settings.liveUpdatesEnabled,
                             onCheckedChange = onUpdateLiveUpdatesEnabled,
@@ -271,6 +274,7 @@ fun SettingsSheet(
                                     style = MaterialTheme.typography.titleSmall,
                                     maxLines = 1,
                                     softWrap = false,
+                                    overflow = TextOverflow.Ellipsis,
                                 )
                                 Text(
                                     text = "スライダーやボタン操作で軽く振動します",
@@ -279,6 +283,7 @@ fun SettingsSheet(
                                 )
                             }
                         }
+                        Spacer(Modifier.width(12.dp))
                         Switch(
                             checked = settings.hapticsEnabled,
                             onCheckedChange = onUpdateHapticsEnabled,

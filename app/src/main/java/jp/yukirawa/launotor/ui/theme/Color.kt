@@ -106,7 +106,7 @@ val DryerOnAccentSoftDark = Color(0xFFFFC7B3)
 // Almost Done (まもなく空き) — Energetic Sunny Gold Pop
 val AlmostDoneContainerLight = Color(0xFFFFC42E)
 val AlmostDoneContentLight = Color(0xFF3D2200)
-val AlmostDoneTrackLight = Color(0xFFE07A00)
+val AlmostDoneTrackLight = Color(0xFF9A4B00)
 
 val AlmostDoneContainerDark = Color(0xFFFFD24C)
 val AlmostDoneContentDark = Color(0xFF361E00)

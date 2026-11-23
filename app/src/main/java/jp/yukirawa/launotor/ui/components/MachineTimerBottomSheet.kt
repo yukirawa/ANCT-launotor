@@ -4,6 +4,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -302,9 +303,10 @@ fun MachineTimerBottomSheet(
                                 onDismiss()
                             },
                             modifier = Modifier
-                                .weight(1f)
+                                .weight(1.15f)
                                 .height(56.dp),
                             shape = CircleShape,
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
                             colors = ButtonDefaults.filledTonalButtonColors(
                                 containerColor = accentSoftColor,
                                 contentColor = onAccentSoftColor,
@@ -322,6 +324,7 @@ fun MachineTimerBottomSheet(
                                 fontWeight = FontWeight.Bold,
                                 maxLines = 1,
                                 softWrap = false,
+                                overflow = TextOverflow.Ellipsis,
                             )
                         }
 
@@ -334,9 +337,10 @@ fun MachineTimerBottomSheet(
                                 onDismiss()
                             },
                             modifier = Modifier
-                                .weight(1.25f)
+                                .weight(1f)
                                 .height(56.dp),
                             shape = CircleShape,
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = accentColor,
                                 contentColor = onAccentColor,
@@ -353,6 +357,7 @@ fun MachineTimerBottomSheet(
                                 style = MaterialTheme.typography.titleMediumEmphasized,
                                 maxLines = 1,
                                 softWrap = false,
+                                overflow = TextOverflow.Ellipsis,
                             )
                         }
                     }

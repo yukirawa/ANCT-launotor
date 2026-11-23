@@ -1,7 +1,10 @@
 package jp.yukirawa.launotor.ui.components
 
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathOperation
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.graphics.shapes.Morph
@@ -39,6 +42,42 @@ class ExpressiveShapesTest {
                     assertTrue("Width too small: ${bounds.width}", bounds.width > 120f)
                     assertTrue("Height too small: ${bounds.height}", bounds.height > 120f)
                 }
+            }
+        }
+    }
+
+    @Test
+    fun progressArcFitsStrictlyInsideActiveShapesWithoutClipping() {
+        val density = Density(2f)
+        val size = Size(200f, 200f)
+        // Conservative outer radius covering arc center + half of 3.5dp stroke on a compact ~80dp tile
+        val outerRadius = size.minDimension * (0.5f - PROGRESS_ARC_INSET_FRACTION) + 4.5f
+        val discPath = Path().apply {
+            addOval(
+                Rect(
+                    left = size.width / 2f - outerRadius,
+                    top = size.height / 2f - outerRadius,
+                    right = size.width / 2f + outerRadius,
+                    bottom = size.height / 2f + outerRadius,
+                ),
+            )
+        }
+
+        MachineType.entries.forEach { type ->
+            listOf(MachineStatus.RUNNING, MachineStatus.ALMOST_DONE).forEach { status ->
+                val polygon = machinePolygon(type, status)
+                val outline = MorphPolygonShape(Morph(polygon, polygon), 1f).createOutline(
+                    size = size,
+                    layoutDirection = LayoutDirection.Ltr,
+                    density = density,
+                ) as Outline.Generic
+                val outside = Path.combine(PathOperation.Difference, discPath, outline.path)
+                val outsideBounds = outside.getBounds()
+                assertTrue(
+                    "Progress ring extends outside $type $status (outside bounds: $outsideBounds)",
+                    outside.isEmpty || outsideBounds.isEmpty ||
+                        (outsideBounds.width < 0.5f && outsideBounds.height < 0.5f),
+                )
             }
         }
     }
