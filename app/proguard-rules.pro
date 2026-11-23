@@ -1,0 +1,1 @@
+# Launotor ProGuard rules

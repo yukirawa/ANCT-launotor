@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">洗濯乾燥機時間監視</string>
+    <string name="app_sub_name">Launotor</string>
+    <string name="channel_live_monitor_name">稼働中ライブ監視 (Live Updates)</string>
+    <string name="channel_live_monitor_desc">稼働中の洗濯機・乾燥機の残り時間を常時表示します</string>
+    <string name="channel_almost_done_name">まもなく空き通知</string>
+    <string name="channel_almost_done_desc">洗濯機・乾燥機が設定した残り時間になったときに通知します</string>
+    <string name="channel_finished_name">完了通知</string>
+    <string name="channel_finished_desc">洗濯機・乾燥機のタイマーが終了したときに通知します</string>
+</resources>
