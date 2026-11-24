@@ -78,6 +78,9 @@ class LanSyncTransport(
     private val localServiceName: String
         get() = "$SERVICE_NAME_PREFIX${deviceIdProvider.senderShortId.toString(16)}"
 
+    @Volatile
+    private var registeredServiceName: String = ""
+
     override fun start(onPacketReceived: (ReceivedSyncPacket) -> Unit) {
         synchronized(stateLock) {
             if (isStarted) return
@@ -347,7 +350,10 @@ class LanSyncTransport(
         }
 
         val regListener = object : NsdManager.RegistrationListener {
-            override fun onServiceRegistered(info: NsdServiceInfo) {}
+            override fun onServiceRegistered(info: NsdServiceInfo) {
+                registeredServiceName = info.serviceName ?: localServiceName
+            }
+
             override fun onRegistrationFailed(info: NsdServiceInfo, errorCode: Int) {
                 Log.d(TAG, "NSD registration failed: $errorCode")
             }
@@ -370,13 +376,21 @@ class LanSyncTransport(
             override fun onStopDiscoveryFailed(serviceType: String, errorCode: Int) {}
 
             override fun onServiceFound(service: NsdServiceInfo) {
-                if (service.serviceName == localServiceName) return
-                if (!service.serviceType.contains("_launotor")) return
+                synchronized(stateLock) {
+                    if (!isStarted) return
+                    val foundName = service.serviceName
+                    if (foundName == localServiceName ||
+                        (registeredServiceName.isNotEmpty() && foundName == registeredServiceName)
+                    ) {
+                        return
+                    }
+                    if (!service.serviceType.contains("_launotor")) return
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                    registerApi34Callback(manager, service)
-                } else {
-                    resolveQueue?.trySend(service)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                        registerApi34CallbackLocked(manager, service)
+                    } else {
+                        resolveQueue?.trySend(service)
+                    }
                 }
             }
 
@@ -395,8 +409,9 @@ class LanSyncTransport(
         }
     }
 
-    private fun registerApi34Callback(manager: NsdManager, service: NsdServiceInfo) {
+    private fun registerApi34CallbackLocked(manager: NsdManager, service: NsdServiceInfo) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) return
+        if (!isStarted) return
         val name = service.serviceName ?: return
         if (api34Callbacks.containsKey(name)) return
 
@@ -406,6 +421,7 @@ class LanSyncTransport(
             }
 
             override fun onServiceUpdated(serviceInfo: NsdServiceInfo) {
+                if (!isStarted) return
                 val host = serviceInfo.hostAddresses.firstOrNull { it is Inet4Address }
                     ?: serviceInfo.hostAddresses.firstOrNull()
                 val port = serviceInfo.port
@@ -496,6 +512,7 @@ class LanSyncTransport(
             runCatching { manager.unregisterService(listener) }
         }
         registrationListener = null
+        registeredServiceName = ""
 
         discoveryListener?.let { listener ->
             runCatching { manager.stopServiceDiscovery(listener) }

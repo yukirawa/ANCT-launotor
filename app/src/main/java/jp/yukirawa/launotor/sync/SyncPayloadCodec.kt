@@ -201,16 +201,21 @@ object SyncPayloadCodec {
             )
         }
 
-        val ageSeconds = ((nowEpochMillis - record.updatedAtEpochMillis).coerceAtLeast(0L) / 1000L)
-            .toInt()
-            .coerceIn(0, 0xFFFF)
+        val elapsedMs = (nowEpochMillis - record.updatedAtEpochMillis).coerceAtLeast(0L)
+        // Conservative ceiling ensures relays never drift updatedAt forward across sub-second hops.
+        val ageSeconds = if (elapsedMs == 0L) {
+            0
+        } else {
+            ((elapsedMs + 999L) / 1000L).toInt().coerceIn(1, 0xFFFF)
+        }
 
         if (record.hasActiveSchedule) {
             val remainingMs = (record.endTimeEpochMillis - nowEpochMillis).coerceAtLeast(0L)
+            // Nearest-second rounding avoids systematic upward creep on multi-hop relays.
             val remainingSeconds = if (remainingMs == 0L) {
                 0
             } else {
-                ((remainingMs + 999L) / 1000L).toInt().coerceIn(1, 0xFFFF)
+                ((remainingMs + 500L) / 1000L).toInt().coerceIn(1, 0xFFFF)
             }
             val initialMinutes = (record.initialDurationMillis / 60_000L)
                 .toInt()

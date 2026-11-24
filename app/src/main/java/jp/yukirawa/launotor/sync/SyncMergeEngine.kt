@@ -116,14 +116,27 @@ object SyncMergeEngine {
                 val resetAlertDedup = !keepWatched ||
                     abs(incomingEndTime - local.endTimeEpochMillis) > ALERT_RESET_DRIFT_THRESHOLD_MS
 
+                val nextAlmostNotified = when {
+                    resetAlertDedup -> 0L
+                    local.almostDoneNotifiedForEndTime > 0L &&
+                        local.almostDoneNotifiedForEndTime == local.endTimeEpochMillis -> incomingEndTime
+                    else -> 0L
+                }
+                val nextFinishedNotified = when {
+                    resetAlertDedup -> 0L
+                    local.finishedNotifiedForEndTime > 0L &&
+                        local.finishedNotifiedForEndTime == local.endTimeEpochMillis -> incomingEndTime
+                    else -> 0L
+                }
+
                 updated += MachineTimerRecord(
                     machineId = spec.id,
                     initialDurationMillis = incomingInitialDuration,
                     endTimeEpochMillis = incomingEndTime,
                     updatedAtEpochMillis = incomingUpdatedAt,
                     updateSource = source,
-                    almostDoneNotifiedForEndTime = if (resetAlertDedup) 0L else local.almostDoneNotifiedForEndTime,
-                    finishedNotifiedForEndTime = if (resetAlertDedup) 0L else local.finishedNotifiedForEndTime,
+                    almostDoneNotifiedForEndTime = nextAlmostNotified,
+                    finishedNotifiedForEndTime = nextFinishedNotified,
                     isWatchedByMe = keepWatched,
                     originHash = incomingOriginHash,
                 )

@@ -173,7 +173,11 @@ class BleGossipTransport(
         val scanner = runCatching { adapter.bluetoothLeScanner }.getOrNull() ?: return
 
         val filter = ScanFilter.Builder()
-            .setServiceData(SERVICE_UUID, ByteArray(0))
+            .setServiceData(
+                SERVICE_UUID,
+                byteArrayOf(SyncPayloadCodec.PROTOCOL_VERSION.toByte()),
+                byteArrayOf(0xFF.toByte()),
+            )
             .build()
         val settings = ScanSettings.Builder()
             .setScanMode(
@@ -316,7 +320,9 @@ class BleGossipTransport(
 
         val callback = object : AdvertiseCallback() {
             override fun onStartFailure(errorCode: Int) {
-                activeAdvertiseCallback = null
+                if (activeAdvertiseCallback === this) {
+                    activeAdvertiseCallback = null
+                }
             }
         }
 

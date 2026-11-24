@@ -186,4 +186,32 @@ class SyncPayloadCodecTest {
         val invalidIndex = byteArrayOf(0x01, 0x00, 0x01, 0x1E, 0x00, 0x0A, 0x1E, 0x00, 0x01, 0x01)
         assertNull(SyncPayloadCodec.decode(invalidIndex))
     }
+
+    @Test
+    fun unsignedHighBitUint16AndUint8FieldsRoundTripWithoutSignExtension() {
+        val packet = SyncPacket(
+            version = SyncPayloadCodec.PROTOCOL_VERSION,
+            senderShortId = 0xCAFE,
+            entries = listOf(
+                SyncEntry(
+                    machineIndex = 13,
+                    isActive = true,
+                    isClearedTombstone = false,
+                    remainingSeconds = 0x9ABC,
+                    initialDurationMinutes = 180,
+                    ageSeconds = 0xBEEF,
+                    originHash = 0xFF,
+                ),
+            ),
+        )
+        val encoded = SyncPayloadCodec.encode(packet)
+        val decoded = SyncPayloadCodec.decode(encoded)!!
+        assertEquals(0xCAFE, decoded.senderShortId)
+        val entry = decoded.entries.single()
+        assertEquals(13, entry.machineIndex)
+        assertEquals(0x9ABC, entry.remainingSeconds)
+        assertEquals(180, entry.initialDurationMinutes)
+        assertEquals(0xBEEF, entry.ageSeconds)
+        assertEquals(0xFF, entry.originHash)
+    }
 }

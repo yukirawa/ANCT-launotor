@@ -1,8 +1,10 @@
 package jp.yukirawa.launotor.sync
 
+import jp.yukirawa.launotor.domain.model.AppSettings
 import jp.yukirawa.launotor.domain.model.LaundryRoomCatalog
 import jp.yukirawa.launotor.domain.model.MachineTimerRecord
 import jp.yukirawa.launotor.domain.model.UpdateSource
+import jp.yukirawa.launotor.notifications.TimerNotificationPlanner
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -197,7 +199,7 @@ class SyncMergeEngineTest {
             originHash = 10,
         )
 
-        // Minor BLE quantization shift (12s) -> preserves watch AND preserves almostDoneNotifiedForEndTime
+        // Minor BLE quantization shift (12s) -> preserves watch AND re-anchors almostDoneNotifiedForEndTime
         val smallShift = SyncEntry(
             machineIndex = w4Index,
             isActive = true,
@@ -214,7 +216,14 @@ class SyncMergeEngineTest {
             rxNowEpochMillis = now,
         ).updatedRecords.single()
         assertTrue(mergedSmall.isWatchedByMe)
-        assertEquals(endTime, mergedSmall.almostDoneNotifiedForEndTime)
+        assertEquals(mergedSmall.endTimeEpochMillis, mergedSmall.almostDoneNotifiedForEndTime)
+        assertTrue(
+            TimerNotificationPlanner.computeDueNotifications(
+                records = mapOf("washer_4" to mergedSmall),
+                settings = AppSettings(almostDoneThresholdMinutes = 15),
+                nowEpochMillis = now,
+            ).isEmpty(),
+        )
 
         // Significant update (>60s) -> preserves watch, resets notified timestamps
         val largeShift = smallShift.copy(remainingSeconds = 25 * 60, ageSeconds = 2)
@@ -279,5 +288,76 @@ class SyncMergeEngineTest {
             rxNowEpochMillis = now,
         )
         assertEquals(0, res.mergedCount)
+    }
+
+    @Test
+    fun fiveHopSubSecondRingDoesNotCauseEchoLoopOrRemainingTimeCreep() {
+        val t0 = 1_700_000_000_000L
+        val originRecord = MachineTimerRecord(
+            machineId = "washer_1",
+            initialDurationMillis = 30 * 60_000L,
+            endTimeEpochMillis = t0 + 30 * 60_000L,
+            updatedAtEpochMillis = t0,
+            originHash = 0x42,
+            isWatchedByMe = true,
+        )
+
+        var currentRecord = originRecord
+        var currentTime = t0
+        val senderIds = listOf(0x1001, 0x1002, 0x1003, 0x1004, 0x1005)
+
+        // Relay across 5 hops at 800ms per hop (total 4000ms > 3000ms jitter window)
+        for (i in 0 until 5) {
+            val nextTime = currentTime + 800L
+            val frame = SyncPayloadCodec.buildBleFrames(
+                records = mapOf("washer_1" to currentRecord),
+                senderShortId = senderIds[i],
+                nowEpochMillis = nextTime,
+            ).single()
+            val packet = SyncPayloadCodec.decode(frame)!!
+            val receiverSenderId = if (i < 4) senderIds[i + 1] else senderIds[0]
+
+            if (i < 4) {
+                val merge = SyncMergeEngine.merge(
+                    existingRecords = emptyMap(),
+                    packet = packet,
+                    localSenderShortId = receiverSenderId,
+                    source = UpdateSource.P2P_BLE,
+                    rxNowEpochMillis = nextTime,
+                )
+                assertEquals(1, merge.mergedCount)
+                currentRecord = merge.updatedRecords.single()
+                assertTrue(
+                    "Remaining time crept up on hop $i",
+                    currentRecord.endTimeEpochMillis <= originRecord.endTimeEpochMillis + 1_000L,
+                )
+                assertTrue(
+                    "Reconstructed updatedAt drifted forward on hop $i",
+                    currentRecord.updatedAtEpochMillis <= t0,
+                )
+            } else {
+                // 5th hop returns to origin (0x1001): origin MUST reject its own echo!
+                val echoMerge = SyncMergeEngine.merge(
+                    existingRecords = mapOf("washer_1" to originRecord),
+                    packet = packet,
+                    localSenderShortId = senderIds[0],
+                    source = UpdateSource.P2P_BLE,
+                    rxNowEpochMillis = nextTime,
+                )
+                assertEquals(0, echoMerge.mergedCount)
+
+                // Even if relayed from a different senderShortId, origin rejects because updatedAt <= t0
+                val relayedEchoFromPeer = packet.copy(senderShortId = 0x9999)
+                val relayedMerge = SyncMergeEngine.merge(
+                    existingRecords = mapOf("washer_1" to originRecord),
+                    packet = relayedEchoFromPeer,
+                    localSenderShortId = senderIds[0],
+                    source = UpdateSource.P2P_BLE,
+                    rxNowEpochMillis = nextTime,
+                )
+                assertEquals(0, relayedMerge.mergedCount)
+            }
+            currentTime = nextTime
+        }
     }
 }

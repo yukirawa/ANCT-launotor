@@ -399,15 +399,14 @@ fun SettingsSheet(
                             contentColor = colorScheme.onSecondaryContainer,
                             modifier = Modifier.fillMaxWidth(),
                         ) {
-                            Row(
+                            Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalArrangement = Arrangement.spacedBy(10.dp),
                             ) {
                                 Row(
-                                    modifier = Modifier.weight(1f),
+                                    modifier = Modifier.fillMaxWidth(),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 ) {
@@ -420,8 +419,10 @@ fun SettingsSheet(
                                         style = MaterialTheme.typography.bodySmall,
                                     )
                                 }
-                                Spacer(Modifier.width(8.dp))
-                                FilledTonalButton(onClick = onRequestBlePermissions) {
+                                FilledTonalButton(
+                                    onClick = onRequestBlePermissions,
+                                    modifier = Modifier.align(Alignment.End),
+                                ) {
                                     Text("Bluetooth を許可", maxLines = 1, softWrap = false)
                                 }
                             }
