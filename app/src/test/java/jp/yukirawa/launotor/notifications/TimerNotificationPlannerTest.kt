@@ -21,11 +21,13 @@ class TimerNotificationPlannerTest {
                 machineId = "washer_1",
                 initialDurationMillis = 30 * 60_000L,
                 endTimeEpochMillis = now + 30 * 60_000L,
+                isWatchedByMe = true,
             ),
             "dryer_4" to MachineTimerRecord(
                 machineId = "dryer_4",
                 initialDurationMillis = 5 * 60_000L,
                 endTimeEpochMillis = now + 5 * 60_000L,
+                isWatchedByMe = true,
             ),
         )
 
@@ -53,6 +55,7 @@ class TimerNotificationPlannerTest {
             machineId = "washer_2",
             initialDurationMillis = 30 * 60_000L,
             endTimeEpochMillis = endTime,
+            isWatchedByMe = true,
         )
 
         val firstPass = TimerNotificationPlanner.computeDueNotifications(
@@ -98,16 +101,19 @@ class TimerNotificationPlannerTest {
                 machineId = "washer_1",
                 initialDurationMillis = 30 * 60_000L,
                 endTimeEpochMillis = now + 15 * 60_000L,
+                isWatchedByMe = true,
             ),
             "dryer_4" to MachineTimerRecord(
                 machineId = "dryer_4",
                 initialDurationMillis = 20 * 60_000L,
                 endTimeEpochMillis = now + 4 * 60_000L,
+                isWatchedByMe = true,
             ),
             "washer_8" to MachineTimerRecord(
                 machineId = "washer_8",
                 initialDurationMillis = 10 * 60_000L,
                 endTimeEpochMillis = now - 60_000L,
+                isWatchedByMe = true,
             ),
         )
 
@@ -139,6 +145,7 @@ class TimerNotificationPlannerTest {
                 machineId = "washer_1",
                 initialDurationMillis = 10 * 60_000L,
                 endTimeEpochMillis = now - 1000L,
+                isWatchedByMe = true,
             ),
         )
         val model = TimerNotificationPlanner.buildLiveUpdateModel(
@@ -158,6 +165,7 @@ class TimerNotificationPlannerTest {
                 machineId = spec.id,
                 initialDurationMillis = durationMin * 60_000L,
                 endTimeEpochMillis = now + durationMin * 60_000L,
+                isWatchedByMe = true,
             )
         }.toMap()
 
@@ -171,5 +179,42 @@ class TimerNotificationPlannerTest {
         assertEquals("washer_1", liveModel.primaryMachine.id)
         assertEquals(14, liveModel.activeCount)
         assertEquals(0, liveModel.finishedCount)
+    }
+
+    @Test
+    fun unwatchedRemoteMachinesAreExcludedFromAlarmsNotificationsAndLiveUpdates() {
+        val now = 1_700_000_000_000L
+        val records = mapOf(
+            "washer_1" to MachineTimerRecord(
+                machineId = "washer_1",
+                initialDurationMillis = 30 * 60_000L,
+                endTimeEpochMillis = now + 3 * 60_000L,
+                isWatchedByMe = false,
+            ),
+            "dryer_1" to MachineTimerRecord(
+                machineId = "dryer_1",
+                initialDurationMillis = 20 * 60_000L,
+                endTimeEpochMillis = now - 5_000L,
+                isWatchedByMe = false,
+            ),
+        )
+        val settings = AppSettings(almostDoneThresholdMinutes = 5, p2pSyncEnabled = true, backgroundP2pEnabled = false)
+
+        assertTrue(TimerNotificationPlanner.computeScheduledAlarms(records, settings, now).isEmpty())
+        assertTrue(TimerNotificationPlanner.computeDueNotifications(records, settings, now).isEmpty())
+        assertNull(TimerNotificationPlanner.buildLiveUpdateModel(records, settings, now))
+        assertEquals(false, TimerNotificationPlanner.hasRunningTimers(records, now))
+        assertEquals(false, TimerNotificationPlanner.shouldKeepServiceRunning(records, settings, now))
+
+        val bgEnabled = settings.copy(backgroundP2pEnabled = true)
+        assertEquals(true, TimerNotificationPlanner.shouldKeepServiceRunning(records, bgEnabled, now))
+        assertEquals(
+            false,
+            TimerNotificationPlanner.shouldKeepServiceRunning(
+                records,
+                bgEnabled.copy(p2pSyncEnabled = false),
+                now,
+            ),
+        )
     }
 }

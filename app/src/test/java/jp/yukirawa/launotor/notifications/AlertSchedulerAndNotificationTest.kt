@@ -9,6 +9,8 @@ import androidx.test.core.app.ApplicationProvider
 import jp.yukirawa.launotor.LaunotorApplication
 import jp.yukirawa.launotor.data.repository.LocalMachineRepository
 import jp.yukirawa.launotor.domain.model.LaundryRoomCatalog
+import jp.yukirawa.launotor.domain.model.UpdateSource
+import jp.yukirawa.launotor.sync.SyncEntry
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import okio.Path.Companion.toPath
@@ -163,6 +165,61 @@ class AlertSchedulerAndNotificationTest {
         val (afterRecords, _) = runBlocking { app.repository.getSnapshot() }
         assertFalse(afterRecords["dryer_2"]!!.hasActiveSchedule)
         assertEquals(0, shadowAlarmManager.scheduledAlarms.size)
+    }
+
+    @Test
+    fun peerSharedMachineTriggersAlertsOnlyAfterUserTogglesWatchOn() = runTest {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val shadowApp = Shadows.shadowOf(context.applicationContext as android.app.Application)
+        shadowApp.grantPermissions(android.Manifest.permission.POST_NOTIFICATIONS)
+
+        val file = tempFolder.newFile("p2p_notify.preferences_pb")
+        val dataStore = PreferenceDataStoreFactory.createWithPath(
+            scope = backgroundScope,
+            produceFile = { file.absolutePath.toPath() },
+        )
+        val repo = LocalMachineRepository(dataStore)
+
+        val now = 1_700_000_000_000L
+        // Peer-shared dryer_1 (index 4) with 4 minutes remaining -> almost done window, but unwatched!
+        val dryer1Index = LaundryRoomCatalog.allMachines.indexOfFirst { it.id == "dryer_1" }
+        repo.mergeRemoteRecords(
+            entries = listOf(
+                SyncEntry(
+                    machineIndex = dryer1Index,
+                    isActive = true,
+                    isClearedTombstone = false,
+                    remainingSeconds = 4 * 60,
+                    initialDurationMinutes = 30,
+                    ageSeconds = 5,
+                    originHash = 88,
+                ),
+            ),
+            source = UpdateSource.P2P_LAN,
+            rxNowEpochMillis = now,
+        )
+
+        val manager = context.getSystemService(NotificationManager::class.java)
+        val shadowNm = Shadows.shadowOf(manager)
+        val shadowAlarmManager = Shadows.shadowOf(context.getSystemService(AlarmManager::class.java))
+
+        val (unwatchedRecords, settings) = repo.getSnapshot()
+        AlertScheduler.syncAlarms(context, unwatchedRecords, settings, now)
+        NotificationHelper.dispatchDueNotifications(context, repo, unwatchedRecords, settings, now)
+
+        assertEquals(0, shadowAlarmManager.scheduledAlarms.size)
+        assertEquals(0, shadowNm.allNotifications.size)
+        assertNull(TimerNotificationPlanner.buildLiveUpdateModel(unwatchedRecords, settings, now))
+
+        // User enables "通知を受け取る"
+        repo.setWatchedByMe("dryer_1", true)
+        val (watchedRecords, _) = repo.getSnapshot()
+        AlertScheduler.syncAlarms(context, watchedRecords, settings, now)
+        NotificationHelper.dispatchDueNotifications(context, repo, watchedRecords, settings, now)
+
+        assertEquals(1, shadowAlarmManager.scheduledAlarms.size)
+        assertEquals(1, shadowNm.allNotifications.size)
+        assertNotNull(TimerNotificationPlanner.buildLiveUpdateModel(watchedRecords, settings, now))
     }
 
     private fun waitUntil(timeoutMs: Long = 3_000L, predicate: () -> Boolean) {

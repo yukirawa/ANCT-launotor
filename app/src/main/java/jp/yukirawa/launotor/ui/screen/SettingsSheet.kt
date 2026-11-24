@@ -14,9 +14,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
+import androidx.compose.material.icons.rounded.Bluetooth
 import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.NotificationsActive
+import androidx.compose.material.icons.rounded.Sensors
+import androidx.compose.material.icons.rounded.Sync
 import androidx.compose.material.icons.rounded.Vibration
 import androidx.compose.material3.ButtonGroup
 import androidx.compose.material3.ButtonGroupDefaults
@@ -51,10 +54,14 @@ fun SettingsSheet(
     settings: AppSettings,
     canPostPromoted: Boolean,
     hasNotificationPermission: Boolean,
+    hasBlePermissions: Boolean,
     onRequestNotificationPermission: () -> Unit,
+    onRequestBlePermissions: () -> Unit,
     onUpdateThresholdMinutes: (Int) -> Unit,
     onUpdateHapticsEnabled: (Boolean) -> Unit,
     onUpdateLiveUpdatesEnabled: (Boolean) -> Unit,
+    onUpdateP2pSyncEnabled: (Boolean) -> Unit,
+    onUpdateBackgroundP2pEnabled: (Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -288,6 +295,137 @@ fun SettingsSheet(
                             checked = settings.hapticsEnabled,
                             onCheckedChange = onUpdateHapticsEnabled,
                         )
+                    }
+                }
+            }
+
+            // Friendly P2P Auto-Share card
+            Surface(
+                shape = MaterialTheme.shapes.large,
+                color = colorScheme.surfaceContainer,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    Text(
+                        text = "みんなで自動共有",
+                        style = MaterialTheme.typography.titleMediumEmphasized,
+                        color = colorScheme.onSurface,
+                        maxLines = 1,
+                        softWrap = false,
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Sensors,
+                                contentDescription = null,
+                                tint = colorScheme.primary,
+                            )
+                            Column {
+                                Text(
+                                    text = "近くの端末と自動共有",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    maxLines = 1,
+                                    softWrap = false,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                Text(
+                                    text = "同じWi-Fiや近くの端末と空き状況を自動共有",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Switch(
+                            checked = settings.p2pSyncEnabled,
+                            onCheckedChange = onUpdateP2pSyncEnabled,
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Sync,
+                                contentDescription = null,
+                                tint = colorScheme.secondary,
+                            )
+                            Column {
+                                Text(
+                                    text = "バックグラウンドでも自動共有",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    maxLines = 1,
+                                    softWrap = false,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                Text(
+                                    text = "アプリを閉じていてもすれ違い共有します",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Switch(
+                            checked = settings.backgroundP2pEnabled,
+                            enabled = settings.p2pSyncEnabled,
+                            onCheckedChange = onUpdateBackgroundP2pEnabled,
+                        )
+                    }
+
+                    if (settings.p2pSyncEnabled && !hasBlePermissions) {
+                        Surface(
+                            shape = MaterialTheme.shapes.medium,
+                            color = colorScheme.secondaryContainer.copy(alpha = 0.75f),
+                            contentColor = colorScheme.onSecondaryContainer,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                            ) {
+                                Row(
+                                    modifier = Modifier.weight(1f),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Bluetooth,
+                                        contentDescription = null,
+                                    )
+                                    Text(
+                                        text = "すれ違い共有にはBluetoothの許可が必要です",
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
+                                }
+                                Spacer(Modifier.width(8.dp))
+                                FilledTonalButton(onClick = onRequestBlePermissions) {
+                                    Text("Bluetooth を許可", maxLines = 1, softWrap = false)
+                                }
+                            }
+                        }
                     }
                 }
             }

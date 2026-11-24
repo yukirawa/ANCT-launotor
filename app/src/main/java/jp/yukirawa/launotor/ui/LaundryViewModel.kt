@@ -134,6 +134,17 @@ class LaundryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    fun setWatchedByMe(machineId: String, watched: Boolean) {
+        viewModelScope.launch {
+            repository.setWatchedByMe(machineId, watched)
+            if (!watched) {
+                AlertScheduler.cancelMachineAlarms(getApplication(), machineId)
+                NotificationHelper.cancelMachineNotifications(getApplication(), machineId)
+            }
+            syncBackgroundMonitors()
+        }
+    }
+
     fun clearAllFinished() {
         viewModelScope.launch {
             val now = System.currentTimeMillis()
@@ -166,6 +177,24 @@ class LaundryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    fun updateP2pSyncEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.updateP2pSyncEnabled(enabled)
+            syncBackgroundMonitors()
+        }
+    }
+
+    fun updateBackgroundP2pEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.updateBackgroundP2pEnabled(enabled)
+            syncBackgroundMonitors()
+        }
+    }
+
+    fun refreshP2pSync() {
+        getApplication<LaunotorApplication>().p2pSyncCoordinator.refreshCapabilities()
+    }
+
     fun refreshMonitors() {
         viewModelScope.launch {
             syncBackgroundMonitors()
@@ -187,7 +216,11 @@ class LaundryViewModel(application: Application) : AndroidViewModel(application)
         AlertScheduler.syncAlarms(context, latestRecords, latestSettings, now)
         MonitoringForegroundService.syncWithTimers(
             context = context,
-            hasRunningTimers = TimerNotificationPlanner.hasRunningTimers(latestRecords, now),
+            hasRunningTimers = TimerNotificationPlanner.shouldKeepServiceRunning(
+                records = latestRecords,
+                settings = latestSettings,
+                nowEpochMillis = now,
+            ),
         )
     }
 }

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.LocalLaundryService
+import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material.icons.rounded.WbSunny
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -112,11 +113,16 @@ fun MachineCard(
         status = state.status,
     )
 
+    val watchedSuffix = if (state.status != MachineStatus.IDLE && state.record.isWatchedByMe) {
+        " 通知オン"
+    } else {
+        ""
+    }
     val statusTextForA11y = when (state.status) {
         MachineStatus.IDLE -> "空き"
-        MachineStatus.RUNNING -> "稼働中 残り${MachineTimerCalculator.formatCompactRemaining(state.remainingMillis)}"
-        MachineStatus.ALMOST_DONE -> "まもなく空き 残り${MachineTimerCalculator.formatCompactRemaining(state.remainingMillis)}"
-        MachineStatus.FINISHED -> "完了"
+        MachineStatus.RUNNING -> "稼働中 残り${MachineTimerCalculator.formatCompactRemaining(state.remainingMillis)}$watchedSuffix"
+        MachineStatus.ALMOST_DONE -> "まもなく空き 残り${MachineTimerCalculator.formatCompactRemaining(state.remainingMillis)}$watchedSuffix"
+        MachineStatus.FINISHED -> "完了$watchedSuffix"
     }
 
     val typeIcon = if (isWasher) Icons.Rounded.LocalLaundryService else Icons.Rounded.WbSunny
@@ -227,6 +233,14 @@ fun MachineCard(
                                 maxLines = 1,
                                 softWrap = false,
                             )
+                            if (state.record.isWatchedByMe) {
+                                Icon(
+                                    imageVector = Icons.Rounded.NotificationsActive,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(if (isCompact) 10.dp else 11.dp),
+                                    tint = contentColor.copy(alpha = 0.9f),
+                                )
+                            }
                         }
                         Text(
                             text = MachineTimerCalculator.formatCompactRemaining(state.remainingMillis),
@@ -253,16 +267,29 @@ fun MachineCard(
                             modifier = Modifier.size(if (isCompact) 22.dp else 26.dp),
                             tint = contentColor,
                         )
-                        Text(
-                            text = state.spec.number.toString(),
-                            style = TabularCountdownStyle.copy(
-                                fontSize = ((if (isCompact) 15f else 17f) / fontScaleGuard).sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = contentColor,
-                            ),
-                            maxLines = 1,
-                            softWrap = false,
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        ) {
+                            Text(
+                                text = state.spec.number.toString(),
+                                style = TabularCountdownStyle.copy(
+                                    fontSize = ((if (isCompact) 15f else 17f) / fontScaleGuard).sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = contentColor,
+                                ),
+                                maxLines = 1,
+                                softWrap = false,
+                            )
+                            if (state.record.isWatchedByMe) {
+                                Icon(
+                                    imageVector = Icons.Rounded.NotificationsActive,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(if (isCompact) 11.dp else 12.dp),
+                                    tint = contentColor.copy(alpha = 0.9f),
+                                )
+                            }
+                        }
                     }
                 }
             }

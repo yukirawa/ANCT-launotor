@@ -19,6 +19,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.LocalLaundryService
+import androidx.compose.material.icons.rounded.NotificationsActive
+import androidx.compose.material.icons.rounded.NotificationsNone
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.WbSunny
 import androidx.compose.material3.Button
@@ -26,6 +28,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
@@ -72,6 +76,7 @@ fun MachineTimerBottomSheet(
     onDismiss: () -> Unit,
     onStartOrUpdate: (durationMinutes: Int) -> Unit,
     onClearTimer: () -> Unit,
+    onToggleWatch: (Boolean) -> Unit,
 ) {
     val sheetState = rememberBottomSheetState(
         initialValue = SheetValue.Hidden,
@@ -257,7 +262,7 @@ fun MachineTimerBottomSheet(
                     }
                 }
 
-                // Bottom Action(s): スタート (idle) or 空きにする + 更新 (running / finished)
+                // Bottom Action(s): スタート (idle) or watch pill + 空きにする + 更新 (running / finished)
                 if (state.status == MachineStatus.IDLE) {
                     Button(
                         onClick = {
@@ -290,6 +295,50 @@ fun MachineTimerBottomSheet(
                         )
                     }
                 } else {
+                    if (state.status == MachineStatus.RUNNING || state.status == MachineStatus.ALMOST_DONE) {
+                        val isWatched = state.record.isWatchedByMe
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            FilterChip(
+                                selected = isWatched,
+                                onClick = {
+                                    if (hapticsEnabled) {
+                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    }
+                                    onToggleWatch(!isWatched)
+                                },
+                                shape = CircleShape,
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = if (isWatched) {
+                                            Icons.Rounded.NotificationsActive
+                                        } else {
+                                            Icons.Rounded.NotificationsNone
+                                        },
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                },
+                                label = {
+                                    Text(
+                                        text = "通知を受け取る",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = 1,
+                                        softWrap = false,
+                                    )
+                                },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = accentSoftColor,
+                                    selectedLabelColor = onAccentSoftColor,
+                                    selectedLeadingIconColor = onAccentSoftColor,
+                                ),
+                            )
+                        }
+                    }
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
