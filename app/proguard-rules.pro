@@ -17,6 +17,9 @@
     public static ** valueOf(java.lang.String);
 }
 
+# Keep P2P sync classes cleanly for R8 release builds
+-keep class jp.yukirawa.launotor.sync.** { *; }
+
 # Keep BuildConfig version metadata displayed in SettingsSheet
 -keepclassmembers class jp.yukirawa.launotor.BuildConfig {
     public static final java.lang.String VERSION_NAME;
