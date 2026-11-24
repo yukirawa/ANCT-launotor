@@ -1,11 +1,17 @@
 # 洗濯乾燥機時間監視 (Launotor)
 
-**v0.3.0** — ランドリールームの配置そのままに、全14台の洗濯機・乾燥機の残り時間を同時にリアルタイム監視できる Android アプリです。
+**v0.4.0** — ランドリールームの配置そのままに、全14台の洗濯機・乾燥機の残り時間を同時にリアルタイム監視できる Android アプリです。**v0.4.0 ではハイブリッド P2P 自動共有（試験版）を搭載しました。**
 
 ---
 
 ## 主な機能 / Features
 
+- **ハイブリッド P2P 自動共有（試験版 / Experimental Preview）**
+  - **BLE すれ違いゴシップ ＋ 同一 Wi-Fi LAN 自動同期**: サーバーやアカウント登録なしで、同じ Wi-Fi 上の端末（NSD / TCP・UDP）および近くの端末（Bluetooth LE 広告＆スキャンによるすれ違いゴシップ）と全14台の稼働状況を自動同期します。
+  - **共有ボタン不要のゼロUI共有**: タイマーの開始・更新・空き戻し操作だけで、近くの端末へ自動的に状態が共有されます（端末間の時刻ズレに左右されない相対残り時間ベースの CRDT / Last-Write-Wins マージを採用）。
+  - **ウォッチ通知分離**: 自分が開始したマシンは自動で通知オン（カードに小さなベルマークを表示）。他の端末から共有されただけのタイマーではアラームや Live Updates 通知を鳴らさず、気になる台だけボトムシートの「通知を受け取る」チップから通知オンにできます。
+  - **設定の「みんなで自動共有」**: 設定画面の「みんなで自動共有」カードから「近くの端末と自動共有」「バックグラウンドでも自動共有（オプトイン）」を切り替えでき、すれ違い共有を使う場合のみ「Bluetooth を許可」から権限を付与できます。
+  - ※ 本バージョンは **P2P 通信機能の試験版** です。実環境・複数端末でのフィールドチューニングを継続しており、Bluetooth / Wi-Fi オフ時や権限未許可時はローカル単体アプリとして安全に動作します。
 - **物理配置をそのまま再現したランドリールーム画面（全14台・枠線なし均等レイアウト）**
   - **左側ウォール**: 洗濯機 1〜4
   - **中央アイランド**: 乾燥機 1〜3（左列）・乾燥機 4〜6（右列）
@@ -36,7 +42,7 @@
 - **Center island**: Dryers `1–3` (left) & `4–6` (right)
 - **Right wall**: Washers `5–8`
 
-In **v0.3.0**, the UI features a borderless 4-column `1:1` spatial floorplan with colorful `MaterialShapes` morphing by machine type and state (`Square`/`Circle`, `Cookie9Sided`/`Cookie6Sided`, `Cookie12Sided`, `Sunny`), a giant slider-only `1–90` min timer bottom sheet, and plain Japanese copy. It persists epoch end-times in Jetpack DataStore, reschedules `AlarmManager` alerts across process death and device reboots, and integrates Android 16+ **Live Updates API** (`ProgressStyle`, promoted ongoing chip, `canPostPromotedNotifications()`) with graceful fallback on Android 8.0–15.
+**v0.4.0** introduces **Hybrid P2P Auto-Sync (Experimental Preview)** — serverless, zero-button state sharing across nearby devices via **BLE gossip** and **same-Wi-Fi LAN sync** (NSD + TCP/UDP) using skew-immune relative-time CRDT merging. Remote updates populate the floorplan without firing alarms or Live Updates unless the user opts in per machine via the `通知を受け取る` watch toggle, while Settings provides the `みんなで自動共有` card for auto-share, opt-in background sync, and Bluetooth permission. Real-world multi-device field tuning is ongoing ahead of v1.0.0. It builds on the v0.3.0 borderless 4-column `1:1` `MaterialShapes` floorplan, giant `1–90` min slider sheet, Jetpack DataStore persistence, `AlarmManager` reboot recovery, and Android 16+ **Live Updates API** (`ProgressStyle`, promoted ongoing chip, `canPostPromotedNotifications()`).
 
 ---
 
@@ -47,6 +53,6 @@ In **v0.3.0**, the UI features a borderless 4-column `1:1` spatial floorplan wit
 ```
 
 - Application ID: `jp.yukirawa.launotor`
-- Version: `0.3.0` (`versionCode = 3`)
+- Version: `0.4.0` (`versionCode = 4`)
 - Min / Target / Compile SDK: `26 / 37 / 37`
 - Material 3: `androidx.compose.material3:material3:1.5.0`
