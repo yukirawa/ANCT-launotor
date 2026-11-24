@@ -13,6 +13,9 @@ import jp.yukirawa.launotor.domain.model.AppSettings
 import jp.yukirawa.launotor.domain.model.LaundryRoomCatalog
 import jp.yukirawa.launotor.domain.model.MachineTimerRecord
 import jp.yukirawa.launotor.domain.model.UpdateSource
+import jp.yukirawa.launotor.sync.MergeResult
+import jp.yukirawa.launotor.sync.SyncEntry
+import jp.yukirawa.launotor.sync.SyncMergeEngine
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -21,6 +24,7 @@ val Context.launotorDataStore: DataStore<Preferences> by preferencesDataStore(na
 
 class LocalMachineRepository(
     private val dataStore: DataStore<Preferences>,
+    private val localOriginHash: Int = 0,
 ) : MachineRepository {
 
     override val machinesFlow: Flow<Map<String, MachineTimerRecord>> =
@@ -55,6 +59,8 @@ class LocalMachineRepository(
             updateSource = UpdateSource.LOCAL,
             almostDoneNotifiedForEndTime = 0L,
             finishedNotifiedForEndTime = 0L,
+            isWatchedByMe = true,
+            originHash = localOriginHash and 0xFF,
         )
         dataStore.edit { prefs ->
             writeRecord(prefs, record)
@@ -77,6 +83,8 @@ class LocalMachineRepository(
             updateSource = UpdateSource.LOCAL,
             almostDoneNotifiedForEndTime = 0L,
             finishedNotifiedForEndTime = 0L,
+            isWatchedByMe = false,
+            originHash = localOriginHash and 0xFF,
         )
         dataStore.edit { prefs ->
             writeRecord(prefs, cleared)
@@ -101,6 +109,8 @@ class LocalMachineRepository(
                             updateSource = UpdateSource.LOCAL,
                             almostDoneNotifiedForEndTime = 0L,
                             finishedNotifiedForEndTime = 0L,
+                            isWatchedByMe = false,
+                            originHash = localOriginHash and 0xFF,
                         ),
                     )
                 }
@@ -164,6 +174,60 @@ class LocalMachineRepository(
         }
     }
 
+    override suspend fun updateP2pSyncEnabled(enabled: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[KEY_P2P_SYNC_ENABLED] = enabled
+        }
+    }
+
+    override suspend fun updateBackgroundP2pEnabled(enabled: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[KEY_BACKGROUND_P2P_ENABLED] = enabled
+        }
+    }
+
+    override suspend fun setWatchedByMe(
+        machineId: String,
+        watched: Boolean,
+    ): MachineTimerRecord? {
+        require(LaundryRoomCatalog.findById(machineId) != null) {
+            "Unknown machineId: $machineId"
+        }
+        var updatedRecord: MachineTimerRecord? = null
+        dataStore.edit { prefs ->
+            val current = readMachines(prefs)[machineId] ?: return@edit
+            if (!current.hasActiveSchedule && watched) {
+                return@edit
+            }
+            val next = current.copy(isWatchedByMe = watched)
+            prefs[watchedKey(machineId)] = watched
+            updatedRecord = next
+        }
+        return updatedRecord
+    }
+
+    override suspend fun mergeRemoteRecords(
+        entries: List<SyncEntry>,
+        source: UpdateSource,
+        rxNowEpochMillis: Long,
+    ): MergeResult {
+        if (entries.isEmpty()) return MergeResult()
+        var result = MergeResult()
+        dataStore.edit { prefs ->
+            val current = readMachines(prefs)
+            result = SyncMergeEngine.mergeEntries(
+                existingRecords = current,
+                entries = entries,
+                source = source,
+                rxNowEpochMillis = rxNowEpochMillis,
+            )
+            for (record in result.updatedRecords) {
+                writeRecord(prefs, record)
+            }
+        }
+        return result
+    }
+
     private fun readMachines(prefs: Preferences): Map<String, MachineTimerRecord> {
         return LaundryRoomCatalog.allMachines.associate { spec ->
             val id = spec.id
@@ -171,14 +235,21 @@ class LocalMachineRepository(
             val source = sourceRaw?.let {
                 runCatching { UpdateSource.valueOf(it) }.getOrNull()
             } ?: UpdateSource.LOCAL
+            val initialDuration = prefs[initialDurationKey(id)] ?: 0L
+            val endTime = prefs[endTimeKey(id)] ?: 0L
+            val hasActiveSchedule = initialDuration > 0L && endTime > 0L
+            // Migration: existing active records saved before v0.4.0 have no stored watched key.
+            val isWatchedByMe = prefs[watchedKey(id)] ?: hasActiveSchedule
             id to MachineTimerRecord(
                 machineId = id,
-                initialDurationMillis = prefs[initialDurationKey(id)] ?: 0L,
-                endTimeEpochMillis = prefs[endTimeKey(id)] ?: 0L,
+                initialDurationMillis = initialDuration,
+                endTimeEpochMillis = endTime,
                 updatedAtEpochMillis = prefs[updatedAtKey(id)] ?: 0L,
                 updateSource = source,
                 almostDoneNotifiedForEndTime = prefs[almostDoneNotifiedKey(id)] ?: 0L,
                 finishedNotifiedForEndTime = prefs[finishedNotifiedKey(id)] ?: 0L,
+                isWatchedByMe = isWatchedByMe,
+                originHash = prefs[originHashKey(id)] ?: 0,
             )
         }
     }
@@ -194,6 +265,8 @@ class LocalMachineRepository(
             },
             hapticsEnabled = prefs[KEY_HAPTICS_ENABLED] ?: true,
             liveUpdatesEnabled = prefs[KEY_LIVE_UPDATES_ENABLED] ?: true,
+            p2pSyncEnabled = prefs[KEY_P2P_SYNC_ENABLED] ?: true,
+            backgroundP2pEnabled = prefs[KEY_BACKGROUND_P2P_ENABLED] ?: false,
         )
     }
 
@@ -208,12 +281,16 @@ class LocalMachineRepository(
         prefs[sourceKey(id)] = record.updateSource.name
         prefs[almostDoneNotifiedKey(id)] = record.almostDoneNotifiedForEndTime
         prefs[finishedNotifiedKey(id)] = record.finishedNotifiedForEndTime
+        prefs[watchedKey(id)] = record.isWatchedByMe
+        prefs[originHashKey(id)] = record.originHash and 0xFF
     }
 
     companion object {
         private val KEY_ALMOST_DONE_THRESHOLD_MIN = intPreferencesKey("settings_almost_done_threshold_min")
         private val KEY_HAPTICS_ENABLED = booleanPreferencesKey("settings_haptics_enabled")
         private val KEY_LIVE_UPDATES_ENABLED = booleanPreferencesKey("settings_live_updates_enabled")
+        private val KEY_P2P_SYNC_ENABLED = booleanPreferencesKey("settings_p2p_sync_enabled")
+        private val KEY_BACKGROUND_P2P_ENABLED = booleanPreferencesKey("settings_background_p2p_enabled")
 
         private fun initialDurationKey(id: String) = longPreferencesKey("machine_${id}_initial_ms")
         private fun endTimeKey(id: String) = longPreferencesKey("machine_${id}_end_ms")
@@ -221,5 +298,7 @@ class LocalMachineRepository(
         private fun sourceKey(id: String) = stringPreferencesKey("machine_${id}_source")
         private fun almostDoneNotifiedKey(id: String) = longPreferencesKey("machine_${id}_almost_notified_end")
         private fun finishedNotifiedKey(id: String) = longPreferencesKey("machine_${id}_finished_notified_end")
+        private fun watchedKey(id: String) = booleanPreferencesKey("machine_${id}_watched")
+        private fun originHashKey(id: String) = intPreferencesKey("machine_${id}_origin_hash")
     }
 }

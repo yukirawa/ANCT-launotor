@@ -62,7 +62,7 @@ object TimerNotificationPlanner {
 
         for (spec in LaundryRoomCatalog.allMachines) {
             val record = records[spec.id] ?: continue
-            if (!record.hasActiveSchedule) continue
+            if (!record.hasActiveSchedule || !record.isWatchedByMe) continue
 
             if (
                 thresholdMillis > 0L &&
@@ -105,7 +105,7 @@ object TimerNotificationPlanner {
 
         for (spec in LaundryRoomCatalog.allMachines) {
             val record = records[spec.id] ?: continue
-            if (!record.hasActiveSchedule) continue
+            if (!record.hasActiveSchedule || !record.isWatchedByMe) continue
 
             val remaining = record.endTimeEpochMillis - nowEpochMillis
             if (remaining <= 0L) {
@@ -143,7 +143,18 @@ object TimerNotificationPlanner {
         records: Map<String, MachineTimerRecord>,
         nowEpochMillis: Long,
     ): Boolean {
-        return records.values.any { it.hasActiveSchedule && it.endTimeEpochMillis > nowEpochMillis }
+        return records.values.any {
+            it.hasActiveSchedule && it.isWatchedByMe && it.endTimeEpochMillis > nowEpochMillis
+        }
+    }
+
+    fun shouldKeepServiceRunning(
+        records: Map<String, MachineTimerRecord>,
+        settings: AppSettings,
+        nowEpochMillis: Long,
+    ): Boolean {
+        return hasRunningTimers(records, nowEpochMillis) ||
+            (settings.p2pSyncEnabled && settings.backgroundP2pEnabled)
     }
 
     fun buildLiveUpdateModel(
@@ -152,10 +163,12 @@ object TimerNotificationPlanner {
         nowEpochMillis: Long,
         zoneId: ZoneId = ZoneId.systemDefault(),
     ): LiveUpdateRenderModel? {
-        val states = LaundryRoomCatalog.allMachines.map { spec ->
+        val states = LaundryRoomCatalog.allMachines.mapNotNull { spec ->
+            val record = records[spec.id] ?: return@mapNotNull null
+            if (!record.isWatchedByMe) return@mapNotNull null
             MachineTimerCalculator.computeState(
                 spec = spec,
-                record = records[spec.id],
+                record = record,
                 nowEpochMillis = nowEpochMillis,
                 almostDoneThresholdMinutes = settings.almostDoneThresholdMinutes,
             )

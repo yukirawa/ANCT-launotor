@@ -34,6 +34,7 @@ class MonitoringForegroundService : Service() {
     override fun onCreate() {
         super.onCreate()
         NotificationChannels.ensureCreated(this)
+        (application as LaunotorApplication).p2pSyncCoordinator.setServiceActive(true)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -98,20 +99,18 @@ class MonitoringForegroundService : Service() {
             )
 
             if (model == null) {
+                val keepForBackgroundP2p = settings.p2pSyncEnabled && settings.backgroundP2pEnabled
+                if (keepForBackgroundP2p) {
+                    val bgNotification = NotificationHelper.buildBackgroundP2pNotification(this)
+                    postOrStartForeground(bgNotification)
+                    return@withLock
+                }
+
                 if (!foregroundStarted) {
                     // Satisfy startForegroundService() contract before stopping so Android never throws
                     // ForegroundServiceDidNotStartInTimeException when a timer expires mid-launch.
                     val placeholder = NotificationHelper.buildServiceIdleNotification(this)
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                        startForeground(
-                            LiveUpdateNotificationBuilder.LIVE_NOTIFICATION_ID,
-                            placeholder,
-                            ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE,
-                        )
-                    } else {
-                        startForeground(LiveUpdateNotificationBuilder.LIVE_NOTIFICATION_ID, placeholder)
-                    }
-                    foregroundStarted = true
+                    postOrStartForeground(placeholder)
                 }
                 stopSelfSafely()
                 return@withLock
@@ -122,22 +121,25 @@ class MonitoringForegroundService : Service() {
                 model = model,
                 requestPromotedOngoing = settings.liveUpdatesEnabled,
             )
+            postOrStartForeground(notification)
+        }
+    }
 
-            if (!foregroundStarted) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                    startForeground(
-                        LiveUpdateNotificationBuilder.LIVE_NOTIFICATION_ID,
-                        notification,
-                        ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE,
-                    )
-                } else {
-                    startForeground(LiveUpdateNotificationBuilder.LIVE_NOTIFICATION_ID, notification)
-                }
-                foregroundStarted = true
-            } else if (NotificationHelper.hasPostNotificationPermission(this)) {
-                getSystemService(NotificationManager::class.java)
-                    ?.notify(LiveUpdateNotificationBuilder.LIVE_NOTIFICATION_ID, notification)
+    private fun postOrStartForeground(notification: android.app.Notification) {
+        if (!foregroundStarted) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                startForeground(
+                    LiveUpdateNotificationBuilder.LIVE_NOTIFICATION_ID,
+                    notification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE,
+                )
+            } else {
+                startForeground(LiveUpdateNotificationBuilder.LIVE_NOTIFICATION_ID, notification)
             }
+            foregroundStarted = true
+        } else if (NotificationHelper.hasPostNotificationPermission(this)) {
+            getSystemService(NotificationManager::class.java)
+                ?.notify(LiveUpdateNotificationBuilder.LIVE_NOTIFICATION_ID, notification)
         }
     }
 
@@ -148,6 +150,7 @@ class MonitoringForegroundService : Service() {
     }
 
     override fun onDestroy() {
+        (application as LaunotorApplication).p2pSyncCoordinator.setServiceActive(false)
         monitorJob?.cancel()
         tickerJob?.cancel()
         serviceScope.cancel()

@@ -29,6 +29,8 @@ enum class RoomZone {
 
 enum class UpdateSource {
     LOCAL,
+    P2P_BLE,
+    P2P_LAN,
 }
 
 enum class MachineStatus {
@@ -114,6 +116,8 @@ data class MachineTimerRecord(
     val updateSource: UpdateSource = UpdateSource.LOCAL,
     val almostDoneNotifiedForEndTime: Long = 0L,
     val finishedNotifiedForEndTime: Long = 0L,
+    val isWatchedByMe: Boolean = false,
+    val originHash: Int = 0,
 ) {
     val hasActiveSchedule: Boolean
         get() = initialDurationMillis > 0L && endTimeEpochMillis > 0L
@@ -123,6 +127,8 @@ data class AppSettings(
     val almostDoneThresholdMinutes: Int = DEFAULT_ALMOST_DONE_THRESHOLD_MINUTES,
     val hapticsEnabled: Boolean = true,
     val liveUpdatesEnabled: Boolean = true,
+    val p2pSyncEnabled: Boolean = true,
+    val backgroundP2pEnabled: Boolean = false,
 ) {
     val almostDoneThresholdMillis: Long
         get() = almostDoneThresholdMinutes.coerceAtLeast(0) * 60_000L

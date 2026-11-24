@@ -176,6 +176,27 @@ object NotificationHelper {
             .build()
     }
 
+    fun buildBackgroundP2pNotification(context: Context): android.app.Notification {
+        val contentIntent = createMainActivityPendingIntent(
+            context = context,
+            requestCode = 1002,
+            machineId = "",
+        )
+        return NotificationCompat.Builder(context, NotificationChannels.CHANNEL_LIVE_MONITOR)
+            .setSmallIcon(R.drawable.ic_stat_laundry)
+            .setContentTitle("近くの端末と自動共有中")
+            .setContentText("空き状況をバックグラウンドで同期しています")
+            .setContentIntent(contentIntent)
+            .setOngoing(true)
+            .setOnlyAlertOnce(true)
+            .setSilent(true)
+            .setRequestPromotedOngoing(false)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .build()
+    }
+
     fun notificationIdFor(machineId: String, kind: AlarmKind): Int {
         val index = LaundryRoomCatalog.allMachines.indexOfFirst { it.id == machineId }.coerceAtLeast(0)
         return 3000 + index * 10 + kind.ordinal

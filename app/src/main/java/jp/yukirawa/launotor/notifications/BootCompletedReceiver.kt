@@ -19,7 +19,7 @@ class BootCompletedReceiver : BroadcastReceiver() {
             return
         }
 
-        val pendingResult = goAsync()
+        val pendingResult: PendingResult? = goAsync()
         val app = context.applicationContext as LaunotorApplication
         val repository = app.repository
 
@@ -39,10 +39,14 @@ class BootCompletedReceiver : BroadcastReceiver() {
                 AlertScheduler.syncAlarms(context, updatedRecords, updatedSettings, now)
                 MonitoringForegroundService.syncWithTimers(
                     context = context,
-                    hasRunningTimers = TimerNotificationPlanner.hasRunningTimers(updatedRecords, now),
+                    hasRunningTimers = TimerNotificationPlanner.shouldKeepServiceRunning(
+                        records = updatedRecords,
+                        settings = updatedSettings,
+                        nowEpochMillis = now,
+                    ),
                 )
             } finally {
-                pendingResult.finish()
+                pendingResult?.finish()
             }
         }
     }

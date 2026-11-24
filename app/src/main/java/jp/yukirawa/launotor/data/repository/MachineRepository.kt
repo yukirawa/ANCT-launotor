@@ -2,6 +2,9 @@ package jp.yukirawa.launotor.data.repository
 
 import jp.yukirawa.launotor.domain.model.AppSettings
 import jp.yukirawa.launotor.domain.model.MachineTimerRecord
+import jp.yukirawa.launotor.domain.model.UpdateSource
+import jp.yukirawa.launotor.sync.MergeResult
+import jp.yukirawa.launotor.sync.SyncEntry
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -45,4 +48,19 @@ interface MachineRepository {
     suspend fun updateHapticsEnabled(enabled: Boolean)
 
     suspend fun updateLiveUpdatesEnabled(enabled: Boolean)
+
+    suspend fun updateP2pSyncEnabled(enabled: Boolean)
+
+    suspend fun updateBackgroundP2pEnabled(enabled: Boolean)
+
+    suspend fun setWatchedByMe(
+        machineId: String,
+        watched: Boolean,
+    ): MachineTimerRecord?
+
+    suspend fun mergeRemoteRecords(
+        entries: List<SyncEntry>,
+        source: UpdateSource,
+        rxNowEpochMillis: Long = System.currentTimeMillis(),
+    ): MergeResult
 }
